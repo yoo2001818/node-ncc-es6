@@ -1,0 +1,36 @@
+{
+  "name": "node-ncc-es6",
+  "version": "0.1.0",
+  "description": "Naver cafe chat library for Node.js with ES6",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yoo2001818/node-ncc-es6.git"
+  },
+  "author": "Duknam Yoo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yoo2001818/node-ncc-es6/issues"
+  },
+  "homepage": "https://github.com/yoo2001818/node-ncc-es6#readme",
+  "keywords": [],
+  "devDependencies": {
+    "babel": "^5.8.23",
+    "babel-core": "^5.8.24",
+    "eslint": "^1.4.1",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.1",
+    "gulp-eslint": "^1.0.0",
+    "gulp-mocha": "^2.1.3",
+    "gulp-util": "^3.0.6",
+    "mocha": "^2.3.2"
+  },
+  "dependencies": {
+    "asn1": "^0.2.2",
+    "request-promise": "^0.4.3",
+    "tough-cookie": "^2.0.0"
+  }
+}
