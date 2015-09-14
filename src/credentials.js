@@ -2,7 +2,7 @@ import request from 'request-promise';
 import querystring from 'querystring';
 import { CookieJar } from 'tough-cookie';
 import { EventEmitter } from 'events';
-import encryptKey from './login-encrypt.js';
+import encryptKey from './loginEncrypt.js';
 import { CHAT_HOME_URL } from './config.js';
 
 function hookCookieJar(cookieJar) {
@@ -14,15 +14,17 @@ function hookCookieJar(cookieJar) {
     }
     return this.setCookieSync(cookieOrStr, uri, options || {});
   };
-  cookieJar.getCookieString = function(uri, syncCb) {
-    if (syncCb) {
-      return CookieJar.prototype.getCookieString.call(this, uri, syncCb);
+  cookieJar.getCookieString = function() {
+    if (arguments[arguments.length - 1] instanceof Function) {
+      return CookieJar.prototype.getCookieString.apply(this, arguments);
     }
-    return this.getCookieStringSync(uri);
+    return this.getCookieStringSync.apply(this, arguments);
   };
-  cookieJar.getCookies = function(uri, syncCb) {
-    if (syncCb) return CookieJar.prototype.getCookies.call(this, uri, syncCb);
-    return this.getCookiesSync(uri);
+  cookieJar.getCookies = function() {
+    if (arguments[arguments.length - 1] instanceof Function) {
+      return CookieJar.prototype.getCookies.apply(this, arguments);
+    }
+    return this.getCookiesSync.apply(this, arguments);
   };
 }
 
@@ -30,6 +32,7 @@ export default class Credentials extends EventEmitter {
   constructor(username, password, cookieJar) {
     super();
     // TODO in-memory password encryption
+    // Note that username/password should belong to cookieJar
     this.username = username;
     this.password = password;
     if (cookieJar != null) {
@@ -77,7 +80,7 @@ export default class Credentials extends EventEmitter {
           'Accept': 'text/plain'
         },
         method: 'POST',
-        body: querystring.stringify({
+        form: {
           enctp: 1,
           encnm: keyName,
           svctype: 0,
@@ -86,7 +89,7 @@ export default class Credentials extends EventEmitter {
           url: 'www.naver.com',
           'smart_level': 1,
           encpw: key
-        }),
+        },
         jar: this.cookieJar
       });
     })

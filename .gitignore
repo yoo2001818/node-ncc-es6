@@ -28,3 +28,5 @@ node_modules
 
 bin/
 reverse/
+
+/config.js
