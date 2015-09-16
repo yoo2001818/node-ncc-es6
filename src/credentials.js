@@ -35,6 +35,9 @@ export default class Credentials extends EventEmitter {
     // Note that username/password should belong to cookieJar
     this.username = username;
     this.password = password;
+    this.setCookieJar(cookieJar);
+  }
+  setCookieJar(cookieJar) {
     if (cookieJar != null) {
       this.cookieJar = CookieJar.deserializeSync(cookieJar);
     } else {
@@ -43,7 +46,7 @@ export default class Credentials extends EventEmitter {
     hookCookieJar(this.cookieJar);
   }
   getCookieJar() {
-    return this.cookieJar.toJSON();
+    return this.cookieJar.serializeSync();
   }
   validateLogin() {
     return request({

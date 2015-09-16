@@ -1,5 +1,6 @@
 import request from 'request-promise';
-import { DEVICE_TYPE, CONNECT_URL, CHAT_HOME_URL, TIME } from './config.js';
+import { DEVICE_TYPE, CONNECT_URL, POLL_URL, CHAT_HOME_URL, TIME,
+  COMMAND_RESULT_CODE, COMMAND_TYPE } from './config.js';
 import { EventEmitter } from 'events';
 
 function getCallbackFn() {
@@ -15,6 +16,15 @@ function extractResponse(body) {
   const decrypted = new Buffer(unpacked, 'base64').toString('utf8');
   return JSON.parse(decrypted);
 }
+
+// validate response...
+const validateResponse = command => message => {
+  if (message.retCode !== COMMAND_RESULT_CODE.SUCCESS ||
+    message.cmd !== command) {
+    throw message;
+  }
+  return message.bdy;
+};
 
 /**
  * Low-level session object to communicate with the chat server
@@ -32,6 +42,7 @@ export default class RawSession extends EventEmitter {
      * @type {Credentials}
      */
     this.credentials = credentials;
+    this.sid = null;
     // And tons of internal variables
     this.connected = false;
   }
@@ -58,12 +69,32 @@ export default class RawSession extends EventEmitter {
         crypto: false
       }
     })
-      .then(extractResponse)
-      .then(data => {
-        // Why the server is sending AES encryption information? ...
-        // Anyway, we've got the session id at this point if we don't have
-        // an error.
-        console.log(data);
-      });
+    .then(extractResponse)
+    .then(validateResponse(COMMAND_RESULT_CODE.CONN_RESP))
+    .then(body => {
+      // Why the server is sending AES encryption information? ...
+      // Anyway, we've got the session id at this point if we don't have
+      // an error.
+      console.log(body);
+      this.sid = body.sid;
+      this.connected = true;
+      // Start polling
+      setTimeout(this.poll.bind(this), 1000);
+    });
+  }
+  poll() {
+    return this.request({
+      url: this.server + POLL_URL,
+      qs: {
+        'callback_fn': getCallbackFn(),
+        sid: this.sid,
+        tid: +new Date(),
+        crypto: false
+      }
+    })
+    .then(extractResponse)
+    .then(message => {
+      console.log(message);
+    });
   }
 }
