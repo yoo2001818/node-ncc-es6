@@ -1,5 +1,7 @@
 // Server address
 export const CHAT_HOME_URL = 'https://chat.cafe.naver.com/ChatHome.nhn';
+export const CHAT_BROKER_URL = 'http://chat.cafe.naver.com';
+export const CHAT_BROKER_SSL_URL = 'https://chat.cafe.naver.com';
 export const SESSION_SERVER_URLS = ['https://ss.cafe.naver.com'];
 // This may look better if I've used lodash. :/
 // Still better than old version of node-ncc.

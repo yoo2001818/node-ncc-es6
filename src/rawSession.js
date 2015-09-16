@@ -5,7 +5,6 @@ import { EventEmitter } from 'events';
 // Server API endpoint
 // There's 'close' too, but I don't think I'll need it.
 // If anyone needs it, feel free to open an issue
-export const COMMAND_URL = '/api/Command.nhn';
 export const POLL_URL = '/poll.nhn';
 export const CONNECT_URL = '/conn.nhn';
 
@@ -53,7 +52,7 @@ function extractResponse(body) {
 }
 
 // validate response...
-const validateResponse = command => message => {
+const validateResponse = message => {
   // Error will be thrown by request-promise if status code is not 200
   // This means we don't have to check status code (We can't check it anyway)
   if (message.retCode !== RESULT_CODE.CMD_SUCCESS) {
@@ -85,8 +84,15 @@ export default class RawSession extends EventEmitter {
   connect(retries = 0, err) {
     if (retries >= TIME_CONFIG.CONN_RETRY_LIMIT_CNT) {
       // Connection failed. Tata!
-      if (err.stack) throw err;
-      if (err.retMsg) throw new Error(err.retMsg);
+      if (err.stack) {
+        this.emit('error', err);
+        throw err;
+      }
+      if (err.retMsg) {
+        this.emit('error', new Error(err.retMsg));
+        throw new Error(err.retMsg);
+      }
+      this.emit('error', new Error(err));
       throw new Error(err);
     }
     if (this.connected) return Promise.reject('Already connected');
@@ -112,7 +118,7 @@ export default class RawSession extends EventEmitter {
       }
     })
     .then(extractResponse)
-    .then(validateResponse(RESULT_CODE.CONN_RESP))
+    .then(validateResponse)
     .then(body => {
       // Why the server is sending AES encryption information? ...
       // Anyway, we've got the session id at this point if we don't have
@@ -133,6 +139,9 @@ export default class RawSession extends EventEmitter {
       // Retry login
       // TODO wait for retry
       return this.connect(retries + 1, message);
+    })
+    .catch(err => {
+      return this.connect(retries + 1, err);
     });
   }
   disconnect() {
@@ -169,11 +178,11 @@ export default class RawSession extends EventEmitter {
       ) {
         if (retCode === RESULT_CODE.CMD_SUCCESS) {
           // Something was received
-          // Emit an event..
-          this.emit('data', bdy);
+          this.handlePoll(bdy);
         }
         this.schedulePoll();
       } else {
+        console.log(message);
         switch (retCode) {
         case RESULT_CODE.ERR_INVALID_SESSION:
         case RESULT_CODE.ERR_SESSION_NOT_FOUND:
@@ -188,13 +197,25 @@ export default class RawSession extends EventEmitter {
           break;
         default:
           // Check limit?
-          this.emit('error', message.retMsg);
+          try {
+            this.emit('error', message.retMsg);
+          } finally {
+          }
           return this.schedulePoll(retries + 1);
         }
       }
-    }, err => {
-      this.emit('error', err);
+    })
+    .catch(err => {
+      try {
+        this.emit('error', err);
+      } finally {
+      }
       return this.schedulePoll(retries + 1);
     });
+  }
+  handlePoll(data) {
+    console.log(data);
+    // Emit an event...
+    this.emit('data', data);
   }
 }
