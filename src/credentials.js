@@ -59,7 +59,7 @@ export default class Credentials extends EventEmitter {
       if (response.request.uri.href.indexOf('nidlogin.login?') !== -1) {
         return Promise.reject();
       } else {
-        let pattern = /var g_sUserId = '([^'\n]+)';/;
+        let pattern = /var g_sUserId = "([^'\n]+)";/;
         let matched = pattern.exec(response.body);
         return Promise.resolve(matched[1]);
       }

@@ -21,9 +21,15 @@ new Promise((resolve, reject) => {
 })
   .then(JSON.parse, () => null)
   .then(cookieJar => credentials.setCookieJar(cookieJar))
-  .then(() => credentials.login())
-  .then(() => fs.writeFile('../auth.json',
-    JSON.stringify(credentials.getCookieJar())))
+  .then(() => credentials.validateLogin())
+  .then(username => {
+    console.log('Logged in with username', username);
+  }, () => {
+    console.log('Logging in');
+    return credentials.login()
+      .then(() => fs.writeFile('../auth.json',
+        JSON.stringify(credentials.getCookieJar())));
+  })
   .then(() => rawSession.connect())
   .catch(err => {
     console.log(err.stack);
