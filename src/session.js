@@ -1,6 +1,7 @@
 import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
+import invert from 'lodash.invert';
 
 const VERSION = 1;
 const COMMAND_URL = '/api/Command.nhn';
@@ -17,17 +18,19 @@ const NOTI_TYPE = {
 };
 
 const MSG_TYPE = {
-  Normal: 0,
-  Invite: 101,
-  Leave: 102,
-  ChangeRoomName: 103,
-  ChangeMasterId: 104,
-  JoinRoom: 105,
-  RejectMember: 106,
-  OpenRoomCreateGreeting: 107,
-  Sticker: 201,
-  Image: 301
+  normal: 0,
+  invite: 101,
+  leave: 102,
+  changeRoomName: 103,
+  changeMasterId: 104,
+  joinRoom: 105,
+  rejectMember: 106,
+  openRoomCreateGreeting: 107,
+  sticker: 201,
+  image: 301
 };
+
+const MSG_TYPE_INVERT = invert(MSG_TYPE);
 
 const validateResponse = (body) => {
   if (body.retCode === COMMAND_RESULT_CODE.SUCCESS) {
@@ -65,6 +68,8 @@ export default class Session extends RawSession {
     case NOTI_TYPE.DelegateMaster:
     case NOTI_TYPE.JoinRoom:
     case NOTI_TYPE.RejectMember:
+      console.log('unhandled');
+      console.log(item);
       break;
     }
   }
@@ -96,14 +101,23 @@ export default class Session extends RawSession {
           // Digest missed messages
           room.lastMsgSn = body.lastMsgSn;
           room.sync = true;
-          body.msgList.forEach(message => {
-            this.handleMessage(message);
+          body.msgList.forEach(newMessage => {
+            // Fill unsent information
+            newMessage.cafeId = message.cafeId;
+            newMessage.roomId = message.roomId;
+            // There's no way to obtain this information if unsync has occurred
+            newMessage.msgId = null;
+            this.handleMessage(newMessage);
           });
+        })
+        .catch(err => {
+          console.log(err);
         });
       }
       return;
     }
     room.lastMsgSn = message.msgSn;
+    // TODO Update user's profile URL, etc.
     console.log(message);
   }
   sendCommand(command, body) {

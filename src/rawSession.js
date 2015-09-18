@@ -123,7 +123,6 @@ export default class RawSession extends EventEmitter {
       // Why the server is sending AES encryption information? ...
       // Anyway, we've got the session id at this point if we don't have
       // an error.
-      console.log(body);
       this.sid = body.sid;
       this.connected = true;
       this.emit('connect');
@@ -131,7 +130,9 @@ export default class RawSession extends EventEmitter {
       return this.schedulePoll();
     }, message => {
       console.log(message);
-      if (message.retCode === RESULT_CODE.ERR_EXPIRED_COOKIE) {
+      // Strangely, server sends 'invalid parameter' if cookie is missing
+      if (message.retCode === RESULT_CODE.ERR_EXPIRED_COOKIE ||
+        message.retCode === RESULT_CODE.ERR_INVALID_PARAMETER) {
         // Relogin is required :/
         return this.credentials.login()
           .then(() => this.connect(retries + 1, message));
@@ -139,9 +140,6 @@ export default class RawSession extends EventEmitter {
       // Retry login
       // TODO wait for retry
       return this.connect(retries + 1, message);
-    })
-    .catch(err => {
-      return this.connect(retries + 1, err);
     });
   }
   disconnect() {
@@ -197,6 +195,7 @@ export default class RawSession extends EventEmitter {
           break;
         default:
           // Check limit?
+          console.log(message);
           try {
             this.emit('error', message.retMsg);
           } finally {
@@ -206,6 +205,7 @@ export default class RawSession extends EventEmitter {
       }
     })
     .catch(err => {
+      console.log(err);
       try {
         this.emit('error', err);
       } finally {

@@ -34,3 +34,7 @@ new Promise((resolve, reject) => {
   .catch(err => {
     console.log(err.stack);
   });
+
+session.on('error', (error) => {
+  console.log(error);
+});
