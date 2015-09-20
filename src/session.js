@@ -1,7 +1,7 @@
 import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
-import invert from 'lodash.invert';
+import { translateMessage } from './translate.js';
 
 const VERSION = 1;
 const COMMAND_URL = '/api/Command.nhn';
@@ -16,21 +16,6 @@ const NOTI_TYPE = {
   RejectMember: 93007,
   ClosedOpenroom: 93008
 };
-
-const MSG_TYPE = {
-  normal: 0,
-  invite: 101,
-  leave: 102,
-  changeRoomName: 103,
-  changeMasterId: 104,
-  joinRoom: 105,
-  rejectMember: 106,
-  openRoomCreateGreeting: 107,
-  sticker: 201,
-  image: 301
-};
-
-const MSG_TYPE_INVERT = invert(MSG_TYPE);
 
 const validateResponse = (body) => {
   if (body.retCode === COMMAND_RESULT_CODE.SUCCESS) {
@@ -118,7 +103,8 @@ export default class Session extends RawSession {
     }
     room.lastMsgSn = message.msgSn;
     // TODO Update user's profile URL, etc.
-    console.log(message);
+    const newMessage = translateMessage(this, message);
+    console.log(newMessage);
   }
   sendCommand(command, body) {
     if (!this.connected) return Promise.reject(new Error('Not connected'));

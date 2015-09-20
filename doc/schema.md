@@ -44,6 +44,12 @@ A credentials information used to communicate with the chat server.
 - created
 - lastMessage
 
+### Incomplete level
+
+1. complete (fetched /w SyncRoom)
+2. userList (fetched /w GetRoomList, missing user list)
+3. incomplete (fetched /w polling)
+
 ## User
 
 - id
