@@ -27,14 +27,20 @@ A credentials information used to communicate with the chat server.
 - image
 - users
 - rooms
+- loading
+
+### Loading level
+
+1. 0 - complete (fetched /w FindOpenRoomList)
+2. 1 - partial (fetched /w GetRoomList)
+3. 2 - bare (fetched /w polling)
 
 ## Room
 
 - id
 - name
-- type
-  - open
-  - private
+- isPublic
+- is1to1
 - cafe
 - maxUserCount
 - userCount
@@ -43,12 +49,13 @@ A credentials information used to communicate with the chat server.
 - updated
 - created
 - lastMessage
+- loading
 
-### Incomplete level
+### Loading level
 
-1. complete (fetched /w SyncRoom)
-2. userList (fetched /w GetRoomList, missing user list)
-3. incomplete (fetched /w polling)
+1. 0 - complete (fetched /w SyncRoom)
+2. 1 - partial (fetched /w GetRoomList, missing user list)
+3. 2 - bare (fetched /w polling or FindOpenRoomList)
 
 ## User
 

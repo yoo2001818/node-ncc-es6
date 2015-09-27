@@ -1,7 +1,7 @@
 import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
-import { translateMessage } from './translate.js';
+import { translateRoomFromMessage, translateMessage } from './translate.js';
 
 const VERSION = 1;
 const COMMAND_URL = '/api/Command.nhn';
@@ -62,10 +62,7 @@ export default class Session extends RawSession {
     // Create chatroom / cafe if it doesn't exist.
     if (this.rooms[message.roomId] == null) {
       // TODO There's more data in it, but I'll leave like this now.
-      this.rooms[message.roomId] = {
-        lastMsgSn: message.msgSn - 1,
-        sync: true
-      };
+      this.rooms[message.roomId] = translateRoomFromMessage(this, message);
     }
     const room = this.rooms[message.roomId];
     // Check if message is in sync. If we have missing messages,
