@@ -27,9 +27,10 @@ A credentials information used to communicate with the chat server.
 - image
 - users
 - rooms
+- load
 - loading
 
-### Loading level
+### Load level
 
 1. 0 - complete (fetched /w FindOpenRoomList)
 2. 1 - partial (fetched /w GetRoomList)
@@ -47,11 +48,11 @@ A credentials information used to communicate with the chat server.
 - users
 - master
 - updated
-- created
 - lastMessage
+- load
 - loading
 
-### Loading level
+### Load level
 
 1. 0 - complete (fetched /w SyncRoom)
 2. 1 - partial (fetched /w GetRoomList, missing user list)

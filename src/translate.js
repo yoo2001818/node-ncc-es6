@@ -3,22 +3,22 @@ import Room from './room.js';
 import Cafe from './cafe.js';
 import User from './user.js';
 
-const CAFE_LOAD_BARE = 2;
-const CAFE_LOAD_PARTIAL = 1;
-const CAFE_LOAD_COMPLETE = 0;
+export const CAFE_LOAD_BARE = 2;
+export const CAFE_LOAD_PARTIAL = 1;
+export const CAFE_LOAD_COMPLETE = 0;
 
-const ROOM_LOAD_BARE = 2;
-const ROOM_LOAD_PARTIAL = 1;
-const ROOM_LOAD_COMPLETE = 0;
+export const ROOM_LOAD_BARE = 2;
+export const ROOM_LOAD_PARTIAL = 1;
+export const ROOM_LOAD_COMPLETE = 0;
 
 // Translates proprietary format to node-ncc-es6 format
 
 export function translateCafeFromMessage(session, data) {
   if (session.cafes[data.cafeId]) return session.cafes[data.cafeId];
   let cafe;
-  cafe = session.cafes[data.cafeId] = new Cafe(data.cafeId);
+  cafe = session.cafes[data.cafeId] = new Cafe(session, data.cafeId);
   // There's almost no information to obtain here...
-  cafe.loading = CAFE_LOAD_BARE;
+  cafe.load = CAFE_LOAD_BARE;
   return cafe;
 }
 
@@ -26,9 +26,9 @@ export function translateRoomFromMessage(session, data) {
   if (session.rooms[data.roomId]) return session.rooms[data.roomId];
   const cafe = translateCafeFromMessage(session, data);
   let room;
-  room = session.rooms[data.roomId] = new Room(data.roomId);
+  room = session.rooms[data.roomId] = new Room(session, data.roomId);
   // There's almost no information to obtain here.
-  room.loading = ROOM_LOAD_BARE;
+  room.load = ROOM_LOAD_BARE;
   room.cafe = cafe;
   room.lastMsgSn = data.msgSn - 1,
   room.sync = true;
@@ -53,7 +53,6 @@ export function translateUserFromMessage(session, data) {
 }
 
 export function translateMessage(session, data) {
-  console.log(data);
   const message = new Message();
   Object.assign(message, {
     id: data.msgSn,
@@ -85,11 +84,12 @@ export function translateMessage(session, data) {
         name: parsed.stickerId,
         pack: parsed.packName,
         image: parsed.pc,
-        mdpi: parsed.mdpi,
+        mdpi: parsed.non_retina,
         xhdpi: parsed.xhdpi,
         xxhdpi: parsed.xxhdpi,
         message: parsed.stickerId
       });
+      break;
     default:
       // TODO should process them..
       message.message = data.msg;
@@ -99,10 +99,53 @@ export function translateMessage(session, data) {
   return message;
 }
 
-export function translateCafe(session, data) {
-
+export function translateUserFromSyncRoom(room, data) {
+  const cafe = room.cafe;
+  let user;
+  if (cafe.users[data.memberId] == null) {
+    user = cafe.users[data.memberId] = new User(data.memberId);
+    room.users[data.memberId] = user;
+    user.cafe = cafe;
+  } else {
+    user = cafe.users[data.memberId];
+  }
+  user.nickname = data.nickname;
+  user.image = data.memberProfileImageUrl.web;
+  // createDate, updateDate, joinState, state, alarm, inviteFlag
+  // But probably I don't need them.
+  return user;
 }
 
-export function translateUser(session, data) {
+export function translateCafeFromSyncRoom(session, data) {
+  const cafe = translateCafeFromMessage(session, data);
+  cafe.name = data.cafeName;
+  cafe.image = data.cafeImageurl;
+}
 
+export function translateSyncRoom(session, data) {
+  // It's really fine to 'extend' from message packet
+  translateCafeFromSyncRoom(session, data);
+  const room = translateRoomFromMessage(session, data);
+  room.load = ROOM_LOAD_COMPLETE;
+  room.name = data.roomName;
+  room.isPublic = data.openType === 'O';
+  room.is1to1 = !data.roomType;
+  room.userCount = data.membercnt;
+  room.maxUserCount = data.limitMemberCnt;
+  // Parse room user list.
+  room.users = {};
+  data.memberList.forEach(user => translateUserFromSyncRoom(room, user));
+  room.master = room.users[data.masterUserId];
+  room.updated = new Date(data.updateTimeSec * 1000);
+  const message = data.msgList.pop();
+  message.roomId = data.roomId;
+  message.cafeId = data.cafeId;
+  room.lastMessage = translateMessage(session, message);
+  // Things I didn't handle in here
+  // closePermission
+  // lastAckSn
+  // offsetmsgSn
+  // msgList
+  // alarm
+  return room;
 }

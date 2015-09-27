@@ -38,3 +38,9 @@ new Promise((resolve, reject) => {
 session.on('error', (error) => {
   console.log(error);
 });
+
+session.on('message', message => {
+  if (message.room.load === 2 && !message.room.loading) {
+    session.syncRoom(message.room);
+  }
+});

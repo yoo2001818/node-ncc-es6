@@ -77,6 +77,7 @@ export default class RawSession extends EventEmitter {
      * @type {Credentials}
      */
     this.credentials = credentials;
+    this.username = null;
     this.sid = null;
     // And tons of internal variables
     this.connected = false;
@@ -124,6 +125,7 @@ export default class RawSession extends EventEmitter {
       // Anyway, we've got the session id at this point if we don't have
       // an error.
       this.sid = body.sid;
+      this.username = this.credentials.username;
       this.connected = true;
       this.emit('connect');
       // Start polling

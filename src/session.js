@@ -1,4 +1,4 @@
-import RawSession, { DEVICE_TYPE } from './rawSession.js';
+import CommandSession from './commandSession.js';
 import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
 import { translateRoomFromMessage, translateMessage } from './translate.js';
@@ -25,7 +25,7 @@ const validateResponse = (body) => {
   throw body;
 };
 
-export default class Session extends RawSession {
+export default class Session extends CommandSession {
   constructor(credentials) {
     // Randomly choose a server
     const server = SESSION_SERVER_URLS[Math.floor(Math.random()*10)+11];
@@ -101,24 +101,8 @@ export default class Session extends RawSession {
     room.lastMsgSn = message.msgSn;
     // TODO Update user's profile URL, etc.
     const newMessage = translateMessage(this, message);
+    room.lastMessage = newMessage;
+    this.emit('message', newMessage);
     console.log(newMessage);
-  }
-  sendCommand(command, body) {
-    if (!this.connected) return Promise.reject(new Error('Not connected'));
-    return this.request({
-      url: CHAT_BROKER_SSL_URL + COMMAND_URL,
-      method: 'POST',
-      timeout: 10000,
-      json: true,
-      body: {
-        ver: VERSION,
-        uid: this.credentials.username,
-        tid: +new Date(),
-        sid: this.sid,
-        deviceType: DEVICE_TYPE.WEB,
-        cmd: COMMAND_TYPE[command],
-        bdy: body
-      }
-    });
   }
 }

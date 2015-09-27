@@ -1,7 +1,9 @@
 import values from 'lodash.values';
+import { ROOM_LOAD_BARE } from './translate.js';
 
 export default class Room {
-  constructor(id, name) {
+  constructor(session, id, name) {
+    this.session = session;
     this.id = id;
     this.name = name;
     this.isPublic = null;
@@ -12,19 +14,20 @@ export default class Room {
     this.users = {};
     this.master = null;
     this.updated = null;
-    this.created = null;
     this.lastMessage = null;
-    this.loading = null;
+    this.loading = false;
+    this.load = ROOM_LOAD_BARE;
   }
   toJSON() {
     let users = values(this.users);
     users = users.map(user => user.id);
     return Object.assign({}, this, {
       cafe: this.cafe && this.cafe.id,
-      users
+      users,
+      session: undefined
     });
   }
   inspect() {
-    return this.id || this.name;
+    return this.name || this.id;
   }
 }
