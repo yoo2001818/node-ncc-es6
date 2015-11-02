@@ -1,5 +1,5 @@
 import RawSession, { DEVICE_TYPE } from './rawSession.js';
-import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
+import { CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
 import { translateSyncRoom } from './translate.js';
 

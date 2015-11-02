@@ -1,6 +1,5 @@
 import Credentials from '../src/credentials.js';
 import Session from '../src/session.js';
-import { SESSION_SERVER_URLS } from '../src/config.js';
 import * as config from '../config.js';
 import fs from 'fs';
 

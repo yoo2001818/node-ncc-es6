@@ -16,7 +16,7 @@ export const TIME_CONFIG = {
   CONN_RETRY_LIMIT_CNT: 10,
   POLL_SLEEP_DELAY: 1000,
   CONN_SLEEP_DELAY: 500,
-  CONN_SLEEP_MAX_DELAY: 3000,
+  CONN_SLEEP_MAX_DELAY: 3000
 };
 
 // Device type enums
@@ -194,29 +194,19 @@ export default class RawSession extends EventEmitter {
           // Relogin is required :/
           return this.credentials.login()
             .then(() => this.connect());
-          break;
         default:
           // Check limit?
-          console.log(message);
-          try {
-            this.emit('error', message.retMsg);
-          } finally {
-          }
+          this.emit('error', message.retMsg);
           return this.schedulePoll(retries + 1);
         }
       }
     })
     .catch(err => {
-      console.log(err);
-      try {
-        this.emit('error', err);
-      } finally {
-      }
+      this.emit('error', err);
       return this.schedulePoll(retries + 1);
     });
   }
   handlePoll(data) {
-    console.log(data);
     // Emit an event...
     this.emit('data', data);
   }

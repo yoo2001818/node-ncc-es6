@@ -8,8 +8,8 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 ## Command Implementation
 - [ ] CreateRoom
 - [ ] InviteRoom
-- [ ] DeleteRoom
-- [ ] SyncRoom
+- [x] DeleteRoom
+- [x] SyncRoom
 - [ ] GetRoomList
 - [ ] ChangeRoomName
 - [ ] ~~SetRoomAlarm~~
@@ -24,7 +24,7 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [ ] GetMsg
 - [ ] AckMsg
 - [ ] ~~ReportBadMember~~
-- [ ] CloseOpenroom
+- [x] CloseOpenroom
 - [ ] ~~GetGroupChatUseConfigList~~
 - [ ] ~~GetCafeGroupChatUse~~
 - [ ] ~~ChageGroupChatUseConfig~~

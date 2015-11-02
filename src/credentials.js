@@ -1,5 +1,4 @@
 import request from 'request-promise';
-import querystring from 'querystring';
 import { CookieJar } from 'tough-cookie';
 import { EventEmitter } from 'events';
 import encryptKey from './loginEncrypt.js';
@@ -96,7 +95,7 @@ export default class Credentials extends EventEmitter {
         jar: this.cookieJar
       });
     })
-    .then(body => {
+    .then(() => {
       let cookieText = this.cookieJar.getCookieString('https://nid.naver.com/',
         {});
       if (cookieText.indexOf('NID_AUT') !== -1) {

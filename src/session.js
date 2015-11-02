@@ -1,10 +1,6 @@
 import CommandSession from './commandSession.js';
-import { SESSION_SERVER_URLS, CHAT_BROKER_SSL_URL,
-  COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
+import { SESSION_SERVER_URLS, COMMAND_RESULT_CODE } from './config.js';
 import { translateRoomFromMessage, translateMessage } from './translate.js';
-
-const VERSION = 1;
-const COMMAND_URL = '/api/Command.nhn';
 
 const NOTI_TYPE = {
   Msg: 93001,
