@@ -1,6 +1,7 @@
 import CommandSession from './commandSession.js';
 import { SESSION_SERVER_URLS } from './config.js';
 import { translateRoomFromMessage, translateMessage } from './translate.js';
+import uploadImage from './uploadImage.js';
 
 const NOTI_TYPE = {
   Msg: 93001,
@@ -73,5 +74,34 @@ export default class Session extends CommandSession {
     room.lastMessage = newMessage;
     this.emit('message', newMessage);
     console.log(newMessage);
+  }
+  // Helper functions to send messages
+  sendText(room, text) {
+    return this.sendMsg({
+      room: room,
+      type: 'text',
+      message: text
+    });
+  }
+  sendSticker(room, stickerId) {
+    return this.sendMsg({
+      room: room,
+      type: 'sticker',
+      message: stickerId
+    });
+  }
+  // Image can be either stream, or uploaded image object
+  sendImage(room, image, options) {
+    if (image.path == null || image.fileSize == null) {
+      // Do upload first
+      return uploadImage(this.request, image, options)
+      // Then recall this routine
+      .then(this.sendImage.bind(this, room));
+    }
+    return this.sendMsg({
+      room: room,
+      type: 'image',
+      message: image
+    });
   }
 }

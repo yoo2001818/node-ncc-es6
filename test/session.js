@@ -2,6 +2,7 @@ import Credentials from '../src/credentials.js';
 import Session from '../src/session.js';
 import * as config from '../config.js';
 import fs from 'fs';
+import path from 'path';
 
 let credentials = new Credentials(
   config.username,
@@ -42,11 +43,14 @@ session.on('message', message => {
   if (message.room.load === 2 && !message.room.loading) {
     session.syncRoom(message.room);
   }
-  if (message.message == 'nodencces6') {
-    session.sendMsg({
-      room: message.room,
-      type: 'text',
-      message: 'Here I am!'
-    });
+  if (message.message == '!es6txt') {
+    session.sendText(message.room, 'Hello, world!');
+  }
+  if (message.message == '!es6sticker') {
+    session.sendSticker(message.room, 'moon_and_james-2');
+  }
+  if (message.message == '!es6image') {
+    session.sendImage(message.room,
+      fs.createReadStream(path.join(__dirname, 'imagetest.png')));
   }
 });

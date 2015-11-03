@@ -7,6 +7,8 @@ import { translateSyncRoom } from './translate.js';
 const VERSION = 1;
 const COMMAND_URL = '/api/Command.nhn';
 
+const CHAT_IMGS_URL = 'http://cafechat.phinf.naver.net';
+
 const validateResponse = (body) => {
   if (body.retCode === COMMAND_RESULT_CODE.SUCCESS) {
     return body;
@@ -157,6 +159,16 @@ export default class CommandSession extends RawSession {
         // Also, inject username simply because it's not sent from the server
         senderId: this.username
       });
+      // TODO restore information if possible
+      if (message.type === 'sticker') {
+        rawMsg.msg = JSON.stringify({
+          stickerId: rawMsg.msg
+        });
+      } else if (message.type === 'image') {
+        rawMsg.msg = JSON.stringify(Object.assign({}, message.message, {
+          orgUrl: CHAT_IMGS_URL + message.message.path
+        }));
+      }
       // Then, handle it
       this.handleMessage(rawMsg);
     }, body => {
