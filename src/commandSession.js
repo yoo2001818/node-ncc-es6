@@ -1,6 +1,7 @@
 import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
+import { MSG_TYPE } from './message.js';
 import { translateSyncRoom } from './translate.js';
 
 const VERSION = 1;
@@ -101,5 +102,73 @@ export default class CommandSession extends RawSession {
       // TODO What's the error code of this?
       throw body;
     });
+  }
+  // Syncs lost message from the server
+  syncMsg(room) {
+    if (room.sync) {
+      room.sync = false;
+      // TODO move this somewhere else?
+      return this.sendCommand('SyncMsg', {
+        cafeId: room.cafe.id,
+        roomId: room.id,
+        lastMsgSn: room.lastMsgSn,
+        size: 100
+      })
+      .then(validateResponse)
+      .then(res => {
+        const body = res.bdy;
+        // Digest missed messages
+        room.lastMsgSn = body.lastMsgSn;
+        room.sync = true;
+        body.msgList.forEach(newMessage => {
+          // Fill unsent information
+          newMessage.cafeId = room.cafe.id;
+          newMessage.roomId = room.id;
+          // There's no way to obtain this information if unsync has occurred
+          newMessage.msgId = null;
+          this.handleMessage(newMessage);
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
+    }
+    return Promise.resolve();
+  }
+  // Sends a message to the server
+  sendMsg(message) {
+    const rawMsg = {
+      cafeId: message.room.cafe.id,
+      roomId: message.room.id,
+      msgType: MSG_TYPE[message.type],
+      // This doesn't mean anything! What's this for?
+      msgId: new Date().valueOf(),
+      msg: message.message
+    };
+    return this.sendCommand('SendMsg', rawMsg)
+    .then(validateResponse)
+    .then(command => {
+      const body = command.bdy;
+      // Combine rawMsg with body
+      Object.assign(rawMsg, body, {
+        // 'sent' flag shows that this is sent by itself so
+        // bots and other things shouldn't process it
+        sent: true,
+        // Also, inject username simply because it's not sent from the server
+        senderId: this.username
+      });
+      // Then, handle it
+      this.handleMessage(rawMsg);
+    }, body => {
+      // TODO What's the error code of this?
+      throw body;
+    });
+  }
+  // While commandSession itself doesn't use polling, but we still need to
+  // process message. Of course it's very raw and not ready to use.
+  // Session will extend it to make it better.
+  handleMessage(message) {
+    // Emit an event...
+    this.emit('rawMessage', message);
   }
 }

@@ -47,8 +47,10 @@ export function translateUserFromMessage(session, data) {
   } else {
     user = cafe.users[data.senderId];
   }
-  user.nickname = data.senderNickname;
-  user.image = data.senderProfileUrl.web;
+  if (!data.sent) {
+    user.nickname = data.senderNickname;
+    user.image = data.senderProfileUrl.web;
+  }
   return user;
 }
 
@@ -59,7 +61,8 @@ export function translateMessage(session, data) {
     room: translateRoomFromMessage(session, data),
     type: MSG_TYPE_INVERT[data.msgType.toString()],
     time: new Date(data.msgTimeSec * 1000),
-    user: translateUserFromMessage(session, data)
+    user: translateUserFromMessage(session, data),
+    sent: data.sent || false
   });
   if (message.type === 'text') {
     message.message = data.msg;

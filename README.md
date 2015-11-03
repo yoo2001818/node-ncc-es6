@@ -19,7 +19,7 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [ ] FindMyCafeList
 - [ ] ~~ProhibitWordCheck~~
 - [ ] GetRoomMemberList
-- [ ] SendMsg
+- [x] SendMsg
 - [x] SyncMsg
 - [ ] GetMsg
 - [ ] AckMsg

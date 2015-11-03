@@ -42,4 +42,11 @@ session.on('message', message => {
   if (message.room.load === 2 && !message.room.loading) {
     session.syncRoom(message.room);
   }
+  if (message.message == 'nodencces6') {
+    session.sendMsg({
+      room: message.room,
+      type: 'text',
+      message: 'Here I am!'
+    });
+  }
 });

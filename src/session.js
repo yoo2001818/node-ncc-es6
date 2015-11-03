@@ -1,5 +1,5 @@
 import CommandSession from './commandSession.js';
-import { SESSION_SERVER_URLS, COMMAND_RESULT_CODE } from './config.js';
+import { SESSION_SERVER_URLS } from './config.js';
 import { translateRoomFromMessage, translateMessage } from './translate.js';
 
 const NOTI_TYPE = {
@@ -11,14 +11,6 @@ const NOTI_TYPE = {
   JoinRoom: 93006,
   RejectMember: 93007,
   ClosedOpenroom: 93008
-};
-
-const validateResponse = (body) => {
-  if (body.retCode === COMMAND_RESULT_CODE.SUCCESS) {
-    return body;
-  }
-  // Otherwise an error.
-  throw body;
 };
 
 export default class Session extends CommandSession {
@@ -61,42 +53,23 @@ export default class Session extends CommandSession {
       this.rooms[message.roomId] = translateRoomFromMessage(this, message);
     }
     const room = this.rooms[message.roomId];
+    // Handle 'sent by itself' messages specially
+    // Server doesn't have this data, so we'll lost this data if we sync it
+    // again.
+    if (message.sent) {
+      room.lastSentMsgSn = message.msgSn;
+    }
     // Check if message is in sync. If we have missing messages,
     // Drop current message and request new one.
     if (message.msgSn - room.lastMsgSn > 1) {
-      if (room.sync) {
-        room.sync = false;
-        // TODO move this somewhere else?
-        this.sendCommand('SyncMsg', {
-          cafeId: message.cafeId,
-          roomId: message.roomId,
-          lastMsgSn: room.lastMsgSn,
-          size: 100
-        })
-        .then(validateResponse)
-        .then(res => {
-          const body = res.bdy;
-          // Digest missed messages
-          room.lastMsgSn = body.lastMsgSn;
-          room.sync = true;
-          body.msgList.forEach(newMessage => {
-            // Fill unsent information
-            newMessage.cafeId = message.cafeId;
-            newMessage.roomId = message.roomId;
-            // There's no way to obtain this information if unsync has occurred
-            newMessage.msgId = null;
-            this.handleMessage(newMessage);
-          });
-        })
-        .catch(err => {
-          console.log(err);
-        });
-      }
-      return;
+      return this.syncMsg(room);
     }
     room.lastMsgSn = message.msgSn;
-    // TODO Update user's profile URL, etc.
     const newMessage = translateMessage(this, message);
+    // Handle 'sent by itself' message.
+    if (newMessage.id === room.lastSentMsgSn) {
+      newMessage.sent = true;
+    }
     room.lastMessage = newMessage;
     this.emit('message', newMessage);
     console.log(newMessage);

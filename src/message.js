@@ -29,5 +29,6 @@ export default class Message {
     this.user;
     this.message;
     this.data;
+    this.sent;
   }
 }
