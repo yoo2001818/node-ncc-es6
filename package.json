@@ -18,23 +18,25 @@
   "homepage": "https://github.com/yoo2001818/node-ncc-es6#readme",
   "keywords": [],
   "devDependencies": {
-    "babel": "^5.8.23",
-    "babel-core": "^5.8.24",
-    "eslint": "^1.4.1",
+    "babel": "^6.0.15",
+    "babel-core": "^6.1.2",
+    "babel-eslint": "^4.1.4",
+    "babel-preset-es2015": "^6.1.2",
+    "eslint": "^1.9.0",
     "gulp": "^3.9.0",
-    "gulp-babel": "^5.2.1",
+    "gulp-babel": "^6.1.0",
     "gulp-eslint": "^1.0.0",
     "gulp-mocha": "^2.1.3",
-    "gulp-util": "^3.0.6",
-    "mocha": "^2.3.2"
+    "gulp-util": "^3.0.7",
+    "mocha": "^2.3.3"
   },
   "dependencies": {
-    "asn1": "^0.2.2",
-    "babel-eslint": "^4.1.1",
+    "asn1": "^0.2.3",
+    "debug": "^2.2.0",
     "lodash.invert": "^3.0.1",
     "lodash.values": "^3.0.0",
     "querystring": "^0.2.0",
-    "request-promise": "^0.4.3",
-    "tough-cookie": "^2.0.0"
+    "request-promise": "^1.0.2",
+    "tough-cookie": "^2.2.0"
   }
 }

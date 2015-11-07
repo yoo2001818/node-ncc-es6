@@ -1,6 +1,9 @@
 import request from 'request-promise';
 import { CHAT_HOME_URL } from './config.js';
 import { EventEmitter } from 'events';
+import debug from 'debug';
+
+const log = debug('ncc:rawSession');
 
 // Server API endpoint
 // There's 'close' too, but I don't think I'll need it.
@@ -64,7 +67,7 @@ const validateResponse = message => {
 /**
  * Low-level session object to communicate with the chat server
  */
-export default class RawSession extends EventEmitter {
+class RawSession extends EventEmitter {
   constructor(server, credentials) {
     super();
     /**
@@ -97,6 +100,7 @@ export default class RawSession extends EventEmitter {
       throw new Error(err);
     }
     if (this.connected) return Promise.reject('Already connected');
+    log('Connecting to the session server');
     // Recreate request object here because of cookieJar object
     this.request = request.defaults({
       jar: this.credentials.cookieJar,
@@ -121,6 +125,7 @@ export default class RawSession extends EventEmitter {
     .then(extractResponse)
     .then(validateResponse)
     .then(body => {
+      log('Connected as session id %s', body.sid);
       // Why the server is sending AES encryption information? ...
       // Anyway, we've got the session id at this point if we don't have
       // an error.
@@ -131,6 +136,7 @@ export default class RawSession extends EventEmitter {
       // Start polling
       return this.schedulePoll();
     }, message => {
+      log('Failed to connect to the session server');
       console.log(message);
       // Strangely, server sends 'invalid parameter' if cookie is missing
       if (message.retCode === RESULT_CODE.ERR_EXPIRED_COOKIE ||
@@ -145,6 +151,7 @@ export default class RawSession extends EventEmitter {
     });
   }
   disconnect() {
+    log('Disconnecting from the session server');
     // Do nothing! :P
     this.connected = false;
     this.emit('disconnect');
@@ -154,6 +161,7 @@ export default class RawSession extends EventEmitter {
       this.disconnect();
       return this.connect();
     }
+    log('Scheduling polling');
     // I think 1000ms is too much... Well whatever.
     // TODO is cutting Promise chain really necessary?
     setTimeout(this.poll.bind(this, retries), TIME_CONFIG.POLL_SLEEP_DELAY);
@@ -161,6 +169,7 @@ export default class RawSession extends EventEmitter {
   // Only one poll cycle should be running in a single time
   poll(retries = 0) {
     if (!this.connected) return Promise.reject();
+    log('Polling data');
     return this.request({
       url: this.server + POLL_URL,
       qs: {
@@ -172,6 +181,7 @@ export default class RawSession extends EventEmitter {
     })
     .then(extractResponse)
     .then(message => {
+      log('Polled data');
       const { retCode, bdy } = message;
       if (retCode === RESULT_CODE.CMD_SUCCESS ||
         retCode === RESULT_CODE.POLLING_RE_CONN
@@ -182,6 +192,7 @@ export default class RawSession extends EventEmitter {
         }
         this.schedulePoll();
       } else {
+        log('Polling data failed');
         console.log(message);
         switch (retCode) {
         case RESULT_CODE.ERR_INVALID_SESSION:
@@ -211,3 +222,5 @@ export default class RawSession extends EventEmitter {
     this.emit('data', data);
   }
 }
+
+export default RawSession;

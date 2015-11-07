@@ -1,7 +1,6 @@
 var gulp = require('gulp');
 var mocha = require('gulp-mocha');
 var babel = require('gulp-babel');
-var gutil = require('gulp-util');
 var eslint = require('gulp-eslint');
 require('babel-core/register');
 
@@ -16,7 +15,7 @@ gulp.task('lint', function () {
 
 gulp.task('mocha', function() {
   return gulp.src(['test/**/*.js'], { read: false })
-    .pipe(mocha({ reporter: 'list' }))
+    .pipe(mocha({ reporter: 'list' }));
 });
 
 gulp.task('test', ['lint', 'mocha']);

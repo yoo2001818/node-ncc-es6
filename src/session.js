@@ -2,6 +2,9 @@ import CommandSession from './commandSession.js';
 import { SESSION_SERVER_URLS } from './config.js';
 import { translateRoomFromMessage, translateMessage } from './translate.js';
 import uploadImage from './uploadImage.js';
+import debug from 'debug';
+
+const log = debug('ncc:session');
 
 const NOTI_TYPE = {
   Msg: 93001,
@@ -14,7 +17,7 @@ const NOTI_TYPE = {
   ClosedOpenroom: 93008
 };
 
-export default class Session extends CommandSession {
+class Session extends CommandSession {
   constructor(credentials) {
     // Randomly choose a server
     const server = SESSION_SERVER_URLS[Math.floor(Math.random()*10)+11];
@@ -28,6 +31,7 @@ export default class Session extends CommandSession {
     });
   }
   handleNotification(item) {
+    log('Handling notifcation %s', item.cmd);
     switch (item.cmd) {
     case NOTI_TYPE.Msg:
       // Handle message
@@ -52,23 +56,27 @@ export default class Session extends CommandSession {
     if (this.rooms[message.roomId] == null) {
       // TODO There's more data in it, but I'll leave like this now.
       this.rooms[message.roomId] = translateRoomFromMessage(this, message);
+      log('Creating missing room');
     }
     const room = this.rooms[message.roomId];
     // Handle 'sent by itself' messages specially
     // Server doesn't have this data, so we'll lost this data if we sync it
     // again.
     if (message.sent) {
+      log('Processing sent message');
       room.lastSentMsgSn = message.msgSn;
     }
     // Check if message is in sync. If we have missing messages,
     // Drop current message and request new one.
     if (message.msgSn - room.lastMsgSn > 1) {
+      log('Sync failed; requesting resync');
       return this.syncMsg(room);
     }
     room.lastMsgSn = message.msgSn;
     const newMessage = translateMessage(this, message);
     // Handle 'sent by itself' message.
     if (newMessage.id === room.lastSentMsgSn) {
+      log('Handling sent message');
       newMessage.sent = true;
     }
     room.lastMessage = newMessage;
@@ -105,3 +113,5 @@ export default class Session extends CommandSession {
     });
   }
 }
+
+export default Session;

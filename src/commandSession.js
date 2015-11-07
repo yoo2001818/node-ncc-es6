@@ -3,6 +3,9 @@ import { CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
 import { MSG_TYPE } from './message.js';
 import { translateSyncRoom } from './translate.js';
+import debug from 'debug';
+
+const log = debug('ncc:commandSession');
 
 const VERSION = 1;
 const COMMAND_URL = '/api/Command.nhn';
@@ -19,12 +22,13 @@ const validateResponse = (body) => {
   throw error;
 };
 
-export default class CommandSession extends RawSession {
+class CommandSession extends RawSession {
   constructor(server, credentials) {
     super(server, credentials);
   }
   sendCommand(command, body) {
     if (!this.connected) return Promise.reject(new Error('Not connected'));
+    log('Sending command %s', command);
     return this.request({
       url: CHAT_BROKER_SSL_URL + COMMAND_URL,
       method: 'POST',
@@ -50,6 +54,7 @@ export default class CommandSession extends RawSession {
     })
     .then(validateResponse)
     .then(() => {
+      log('Successfully deleted room %s', room.name);
       // Remove room from the list, I suppose
       delete room.users[this.username];
     }, body => {
@@ -73,6 +78,7 @@ export default class CommandSession extends RawSession {
     })
     .then(validateResponse)
     .then(() => {
+      log('Successfully closed room %s', room.name);
       // The room has been terminated; Delete from cafe and room.
       delete this.rooms[room.id];
       delete room.cafe.rooms[room.id];
@@ -96,6 +102,7 @@ export default class CommandSession extends RawSession {
     .then(command => {
       const body = command.bdy;
       translateSyncRoom(this, body);
+      log('Synced room %s', room.name);
       // Oh well doesn't matter. elevate loading level to 0
       room.load = 0;
       room.loading = false;
@@ -118,6 +125,7 @@ export default class CommandSession extends RawSession {
       })
       .then(validateResponse)
       .then(res => {
+        log('Synced messages; digesting');
         const body = res.bdy;
         // Digest missed messages
         room.lastMsgSn = body.lastMsgSn;
@@ -130,6 +138,7 @@ export default class CommandSession extends RawSession {
           newMessage.msgId = null;
           this.handleMessage(newMessage);
         });
+        log('Digestion done');
       })
       .catch(err => {
         console.log(err);
@@ -169,6 +178,7 @@ export default class CommandSession extends RawSession {
           orgUrl: CHAT_IMGS_URL + message.message.path
         }));
       }
+      log('Sent message; handling');
       // Then, handle it
       this.handleMessage(rawMsg);
     }, body => {
@@ -184,3 +194,5 @@ export default class CommandSession extends RawSession {
     this.emit('rawMessage', message);
   }
 }
+
+export default CommandSession;
