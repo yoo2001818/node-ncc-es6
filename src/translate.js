@@ -94,6 +94,7 @@ export function translateMessage(session, data) {
       });
       break;
     default:
+      console.log(parsed);
       // TODO should process them..
       message.message = data.msg;
       break;

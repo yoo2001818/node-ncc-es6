@@ -38,14 +38,13 @@ class Session extends CommandSession {
       this.handleMessage(item.bdy);
       break;
     case NOTI_TYPE.ClosedOpenroom:
-      // Room has been destroyed.
-      break;
     case NOTI_TYPE.Invited:
     case NOTI_TYPE.ChangeRoomName:
     case NOTI_TYPE.DeleteRoom:
     case NOTI_TYPE.DelegateMaster:
     case NOTI_TYPE.JoinRoom:
     case NOTI_TYPE.RejectMember:
+    default:
       console.log('unhandled');
       console.log(item);
       break;
@@ -82,6 +81,10 @@ class Session extends CommandSession {
     room.lastMessage = newMessage;
     this.emit('message', newMessage);
     console.log(newMessage);
+    // Now, check 'special' messages. We have to handle room name change, etc.
+    // But, it's possible to be 'tricked' by false data. Anyone can submit
+    // these special messages, and that isn't good. Yup. Maybe some kind of
+    // safety methods should exist in here.
   }
   // Helper functions to send messages
   sendText(room, text) {

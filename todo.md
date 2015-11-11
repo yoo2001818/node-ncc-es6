@@ -1,0 +1,16 @@
+- [ ] ClosedOpenroom
+- [x] Invited
+- [x] ChangeRoomName
+- [x] DeleteRoom
+- [x] DelegateMaster
+- [x] JoinRoom
+- [x] RejectMember
+
+- [x] invite
+- [x] leave
+- [x] changeName
+- [x] changeMaster
+- [x] join
+- [x] reject
+- [ ] create
+- [ ] tvCast
