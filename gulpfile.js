@@ -24,8 +24,10 @@ gulp.task('watch', function() {
   return gulp.watch(['src/**/*.js', 'test/**/*.js'], ['test']);
 });
 
-gulp.task('default', ['test'], function() {
-  return gulp.src('src/index.js')
+gulp.task('babel', function() {
+  return gulp.src(['src/**/*.js'])
     .pipe(babel())
-    .pipe(gulp.dest('bin'));
+    .pipe(gulp.dest('lib'));
 });
+
+gulp.task('default', ['babel']);

@@ -27,6 +27,7 @@ build/Release
 node_modules
 
 bin/
+lib/
 reverse/
 
 /config.js

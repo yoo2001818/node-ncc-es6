@@ -1,5 +1,4 @@
-import Credentials from '../src/credentials.js';
-import Session from '../src/session.js';
+import Session, { Credentials } from '../src/index.js';
 import * as config from '../config.js';
 import fs from 'fs';
 import path from 'path';
