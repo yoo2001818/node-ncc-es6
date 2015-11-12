@@ -3,6 +3,7 @@ import Session from '../src/session.js';
 import * as config from '../config.js';
 import fs from 'fs';
 import path from 'path';
+import values from 'lodash.values';
 
 let credentials = new Credentials(
   config.username,
@@ -52,5 +53,15 @@ session.on('message', message => {
   if (message.message == '!es6image') {
     session.sendImage(message.room,
       fs.createReadStream(path.join(__dirname, 'imagetest.png')));
+  }
+  if (message.message == '!userList') {
+    session.sendText(message.room,
+      values(message.room.users).map(user => user.nickname).join(', '));
+  }
+  if (message.message.slice(0, 5) === '!node' &&
+    message.user.id === session.username
+  ) {
+    // Meh. I'm too lazy.
+    session.sendText(message.room, eval(message.message.slice(6)));
   }
 });

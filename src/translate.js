@@ -42,11 +42,11 @@ export function translateUserFromMessage(session, data) {
   let user;
   if (cafe.users[data.senderId] == null) {
     user = cafe.users[data.senderId] = new User(data.senderId);
-    room.users[data.senderId] = user;
     user.cafe = cafe;
   } else {
     user = cafe.users[data.senderId];
   }
+  room.users[data.senderId] = user;
   if (!data.sent) {
     user.nickname = data.senderNickname;
     user.image = data.senderProfileUrl.web;
@@ -66,11 +66,11 @@ export function translateUserFromTarget(room, data) {
   let user;
   if (cafe.users[id] == null) {
     user = cafe.users[id] = new User(id);
-    room.users[id] = user;
     user.cafe = cafe;
   } else {
     user = cafe.users[id];
   }
+  room.users[id] = user;
   user.nickname = nickname;
   return user;
 }
@@ -146,8 +146,10 @@ export function translateMessage(session, data) {
       const { sender, target, actionItem } = parsed;
       if (message.user.id !== sender.id) {
         // Nope nope nope nope
-        console.log('Malformed message received from ' + message.user);
+        console.log('Malformed message received from', message.user);
         console.log('Setting message type to text to prevent bugs');
+        console.log(parsed);
+        message.message = 'MALFORMED:: ' + data.msg;
         message.type = 'text';
         return message;
       }
@@ -230,11 +232,11 @@ export function translateUserFromSyncRoom(room, data) {
   let user;
   if (cafe.users[data.memberId] == null) {
     user = cafe.users[data.memberId] = new User(data.memberId);
-    room.users[data.memberId] = user;
     user.cafe = cafe;
   } else {
     user = cafe.users[data.memberId];
   }
+  room.users[data.memberId] = user;
   user.nickname = data.nickname;
   user.image = data.memberProfileImageUrl.web;
   // createDate, updateDate, joinState, state, alarm, inviteFlag

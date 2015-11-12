@@ -58,8 +58,8 @@ class Session extends CommandSession {
       log('Creating missing room');
     }
     const room = this.rooms[message.roomId];
-    // Ignore if room is syncing.
-    if (room.sync) return;
+    // Ignore if room is not in sync.
+    if (!room.sync) return;
     // Handle 'sent by itself' messages specially
     // Server doesn't have this data, so we'll lost this data if we sync it
     // again.
