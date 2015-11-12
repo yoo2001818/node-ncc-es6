@@ -9,9 +9,6 @@ let credentials = new Credentials(
   config.username,
   config.password
 );
-credentials.username = config.username;
-credentials.password = config.password;
-
 let session = new Session(credentials);
 
 new Promise((resolve, reject) => {
