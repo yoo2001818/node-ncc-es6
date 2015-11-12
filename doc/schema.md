@@ -24,8 +24,8 @@ A credentials information used to communicate with the chat server.
 
 - id
 - name
-- image
-- users
+- image - missing in bare
+- users - missing in partial, bare
 - rooms
 - load
 - loading
@@ -40,13 +40,13 @@ A credentials information used to communicate with the chat server.
 
 - id
 - name
-- isPublic
-- is1to1
+- isPublic - missing in bare
+- is1to1 - missing in bare
 - cafe
-- maxUserCount
-- userCount
-- users
-- master
+- maxUserCount - missing in bare
+- userCount - missing in bare
+- users - missing in partial, bare
+- master - missing in bare
 - updated
 - lastMessage
 - load

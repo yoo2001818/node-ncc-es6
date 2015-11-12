@@ -37,21 +37,23 @@ session.on('error', (error) => {
   console.log(error);
 });
 
-session.on('message', message => {
+session.on('message', message =>  {
+  console.log(message);
   if (message.room.load === 2 && !message.room.loading) {
     session.syncRoom(message.room);
   }
-  if (message.message == '!es6txt') {
+  if (message.type !== 'text') return;
+  if (message.message === '!es6txt') {
     session.sendText(message.room, 'Hello, world!');
   }
-  if (message.message == '!es6sticker') {
+  if (message.message === '!es6sticker') {
     session.sendSticker(message.room, 'moon_and_james-2');
   }
-  if (message.message == '!es6image') {
+  if (message.message === '!es6image') {
     session.sendImage(message.room,
       fs.createReadStream(path.join(__dirname, 'imagetest.png')));
   }
-  if (message.message == '!userList') {
+  if (message.message === '!userList') {
     session.sendText(message.room,
       values(message.room.users).map(user => user.nickname).join(', '));
   }
