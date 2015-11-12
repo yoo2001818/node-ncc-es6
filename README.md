@@ -39,16 +39,16 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 ## Packet Handling
 - [x] Msg
   - [x] Normal
-  - [ ] Invite
-  - [ ] Leave
-  - [ ] ChangeRoomname
-  - [ ] ChangeMasterId
-  - [ ] JoinRoom
-  - [ ] RejectMember
-  - [ ] OpenRoomCreateGreeting
+  - [x] Invite
+  - [x] Leave
+  - [x] ChangeRoomname
+  - [x] ChangeMasterId
+  - [x] JoinRoom
+  - [x] RejectMember
+  - [x] OpenRoomCreateGreeting
   - [x] Sticker
   - [x] Image
-  - [ ] TvCast
+  - [x] TvCast
 - [ ] Invited
 - [ ] ChangeRoomName
 - [ ] DeleteRoom

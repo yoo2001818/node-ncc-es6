@@ -58,6 +58,8 @@ class Session extends CommandSession {
       log('Creating missing room');
     }
     const room = this.rooms[message.roomId];
+    // Ignore if room is syncing.
+    if (room.sync) return;
     // Handle 'sent by itself' messages specially
     // Server doesn't have this data, so we'll lost this data if we sync it
     // again.
@@ -78,13 +80,14 @@ class Session extends CommandSession {
       log('Handling sent message');
       newMessage.sent = true;
     }
+    // Handle force resync messages.
+    if (newMessage.resync) {
+      // However, we don't need wait for result to come. I think so?
+      this.syncRoom(newMessage.room);
+    }
     room.lastMessage = newMessage;
     this.emit('message', newMessage);
     console.log(newMessage);
-    // Now, check 'special' messages. We have to handle room name change, etc.
-    // But, it's possible to be 'tricked' by false data. Anyone can submit
-    // these special messages, and that isn't good. Yup. Maybe some kind of
-    // safety methods should exist in here.
   }
   // Helper functions to send messages
   sendText(room, text) {

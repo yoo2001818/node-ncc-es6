@@ -54,6 +54,27 @@ export function translateUserFromMessage(session, data) {
   return user;
 }
 
+export function translateUserFromTarget(room, data) {
+  const cafe = room.cafe;
+  // What the heck? Who wrote the server? This doesn't look good...
+  // Anyway, we have to check both from the client, which is kinda bad.
+  // For your information, 'sender' or 'target' uses id, nickName scheme,
+  // 'actionItem' uses memberId, nickname scheme.
+  // What a horrible idea. Urrugh.
+  const id = data.id || data.memberId;
+  const nickname = data.nickName || data.nickname;
+  let user;
+  if (cafe.users[id] == null) {
+    user = cafe.users[id] = new User(id);
+    room.users[id] = user;
+    user.cafe = cafe;
+  } else {
+    user = cafe.users[id];
+  }
+  user.nickname = nickname;
+  return user;
+}
+
 export function translateMessage(session, data) {
   const message = new Message();
   Object.assign(message, {
@@ -92,6 +113,107 @@ export function translateMessage(session, data) {
         xxhdpi: parsed.xxhdpi,
         message: parsed.stickerId
       });
+      break;
+    case 'tvCast':
+      // Uh, why handle this? This is unimplemented actually.
+      // Since this is not going to be used, I'm gonna put random info
+      // from the packet. Doesn't matter right? Feel free to send a pull
+      // request if you really need this.
+      Object.assign(message, {
+        message: parsed.title,
+        url: parsed.url,
+        channel: parsed.channel,
+        description: parsed.description,
+        title: parsed.title,
+        playtime: parsed.playtime,
+        thumbnail: parsed.thumbnail
+      });
+      break;
+    // Now, check 'special' messages. We have to handle room name change, etc.
+    // But, it's possible to be 'tricked' by false data. Anyone can submit
+    // these special messages, and that isn't good. Yup. Maybe some kind of
+    // safety methods should exist in here.
+    case 'invite':
+    case 'leave':
+    case 'changeName':
+    case 'changeMaster':
+    case 'join':
+    case 'reject':
+    case 'create':
+      // Nevertheless, That validation should be done in the server side.
+      // But I'm doing a simple check just in case. But this can't block
+      // everything, you know.
+      const { sender, target, actionItem } = parsed;
+      if (message.user.id !== sender.id) {
+        // Nope nope nope nope
+        console.log('Malformed message received from ' + message.user);
+        console.log('Setting message type to text to prevent bugs');
+        message.type = 'text';
+        return message;
+      }
+      // Otherwise, try to process target.
+      message.message = target || actionItem;
+      // 'join', 'leave', 'reject', 'invite' can be processed safely;
+      // Process data if that's the case.
+
+      // However, 'join' automatically gets processed by previous routine.
+      // Which means, we have to do nothing!
+      if (message.type === 'join') {
+        message.message = message.user.nickname;
+        message.target = message.user;
+        return message;
+      }
+      // 'leave' too. However, we need to remove the user from the room.
+      // Not from the cafe though, we may need reference to the user later.
+      if (message.type === 'leave') {
+        // Just remove the user from the room.
+        delete message.room.users[message.user.id];
+        message.message = message.user.nickname;
+        message.target = message.user;
+        return message;
+      }
+      // 'reject'. That equals to leaving. However, we look for the
+      // actionItem this time.
+      if (message.type === 'reject') {
+        // Anyway, retrieve the user from the data.
+        const targetUser = translateUserFromTarget(message.room, actionItem);
+        // Then remove the user from the room list.
+        delete message.room.users[targetUser.id];
+        message.message = targetUser.nickname;
+        message.target = targetUser;
+        return message;
+      }
+      // 'invite' too. We only have to look for the target!
+      // Oh, there are 'groupChatBlockMemberList' and 'secedeMemberList'
+      // too but I have no idea what they are. Feel free to send a pull request
+      // or issue for that!
+      if (message.type === 'invite') {
+        // Retrieve the user from the data. This time it's an array.
+        const targetUsers = target.map(
+          user => translateUserFromTarget(message.room, user)
+        );
+        // Not too shabby, eh?
+        message.message = targetUsers.map(user => user.nickname).join(' ,');
+        message.target = targetUsers;
+        return message;
+      }
+      // How about 'changeName'? We can just change room's name. Duh.
+      if (message.type === 'changeName') {
+        message.room.name = actionItem;
+        message.message = actionItem;
+        message.target = actionItem;
+        return message;
+      }
+      // We still have 'changeMaster' and 'create'.
+      // However, the server doesn't give sufficient information for
+      // createMaster, and I have no idea what 'create' does.
+      // Force resync if that happens.
+      message.message = actionItem;
+      // TODO we have to refill information later; But not now.
+      message.target = actionItem;
+
+      // message.resync indicates that the message should be trigger resync.
+      message.resync = true;
       break;
     default:
       console.log(parsed);
