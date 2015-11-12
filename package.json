@@ -1,6 +1,6 @@
 {
   "name": "node-ncc-es6",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Naver cafe chat library for Node.js with ES6",
   "main": "index.js",
   "scripts": {
