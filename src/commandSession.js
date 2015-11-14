@@ -101,12 +101,12 @@ class CommandSession extends RawSession {
     .then(validateResponse)
     .then(command => {
       const body = command.bdy;
-      translateSyncRoom(this, body);
-      log('Synced room %s', room.name);
+      const newRoom = translateSyncRoom(this, body);
+      log('Synced room %s', newRoom.name);
       // Oh well doesn't matter. elevate loading level to 0
-      room.load = 0;
-      room.loading = false;
-      return room;
+      newRoom.load = 0;
+      newRoom.loading = false;
+      return newRoom;
     }, body => {
       room.loading = false;
       // TODO What's the error code of this?
