@@ -38,6 +38,9 @@ class Session extends CommandSession {
       this.handleMessage(item.bdy);
       break;
     case NOTI_TYPE.ClosedOpenroom:
+      // Room has closed; Remove reference to it
+      delete this.rooms[item.bdy.roomId];
+      break;
     case NOTI_TYPE.Invited:
     case NOTI_TYPE.ChangeRoomName:
     case NOTI_TYPE.DeleteRoom:
@@ -45,8 +48,15 @@ class Session extends CommandSession {
     case NOTI_TYPE.JoinRoom:
     case NOTI_TYPE.RejectMember:
     default:
-      console.log('unhandled');
-      console.log(item);
+      // Create chatroom / cafe if it doesn't exist.
+      if (this.rooms[item.bdy.roomId] == null) {
+        // TODO There's more data in it, but I'll leave like this now.
+        this.rooms[item.bdy.roomId] = translateRoomFromMessage(this, item.bdy);
+        log('Creating missing room');
+      }
+      const room = this.rooms[item.bdy.roomId];
+      // Just resync it; Heh.
+      this.syncMsg(room);
       break;
     }
   }

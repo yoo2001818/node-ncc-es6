@@ -49,10 +49,10 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
   - [x] Sticker
   - [x] Image
   - [x] TvCast
-- [ ] Invited
-- [ ] ChangeRoomName
-- [ ] DeleteRoom
-- [ ] DelegateMaster
-- [ ] JoinRoom
-- [ ] RejectMember
-- [ ] ClosedOpenroom
+- [x] Invited
+- [x] ChangeRoomName
+- [x] DeleteRoom
+- [x] DelegateMaster
+- [x] JoinRoom
+- [x] RejectMember
+- [x] ClosedOpenroom
