@@ -227,6 +227,20 @@ export function translateMessage(session, data) {
   return message;
 }
 
+export function translateUserBareId(room, id) {
+  const cafe = room.cafe;
+  let user;
+  if (cafe.users[id] == null) {
+    user = cafe.users[id] = new User(id);
+    user.cafe = cafe;
+  } else {
+    user = cafe.users[id];
+  }
+  room.users[id] = user;
+  // Nickname is unknown at this moment.
+  return user;
+}
+
 export function translateUserFromSyncRoom(room, data) {
   const cafe = room.cafe;
   let user;
@@ -247,7 +261,10 @@ export function translateUserFromSyncRoom(room, data) {
 export function translateCafeFromSyncRoom(session, data) {
   const cafe = translateCafeFromMessage(session, data);
   cafe.name = data.cafeName;
-  cafe.image = data.cafeImageurl;
+  // What the heck?????
+  // FYI: SyncRoom returns 'cafeImageurl',
+  // but GetRoomList returns 'cafeImageUrl'
+  cafe.image = data.cafeImageurl || data.cafeImageUrl;
 }
 
 export function translateSyncRoom(session, data) {
@@ -275,5 +292,22 @@ export function translateSyncRoom(session, data) {
   // offsetmsgSn
   // msgList
   // alarm
+  return room;
+}
+
+export function translateRoomList(session, data) {
+  // It's really fine to 'extend' from message packet
+  translateCafeFromSyncRoom(session, data);
+  const room = translateRoomFromMessage(session, data);
+  room.load = ROOM_LOAD_PARTIAL;
+  room.name = data.roomName;
+  room.isPublic = data.openType === 'O';
+  room.is1to1 = !data.roomType;
+  room.userCount = data.memberCnt;
+  room.maxUserCount = data.limitMemberCnt;
+  room.master = translateUserBareId(room, data.masterUserId);
+  room.updated = new Date(data.lastMsgTimeSec * 1000);
+  room.lastMsgSn = data.lastMsgSn;
+  // TODO Don't process lastMessage yet
   return room;
 }

@@ -2,7 +2,7 @@ import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
 import { MSG_TYPE } from './message.js';
-import { translateSyncRoom } from './translate.js';
+import { translateSyncRoom, translateRoomList } from './translate.js';
 import debug from 'debug';
 
 const log = debug('ncc:commandSession');
@@ -106,9 +106,30 @@ class CommandSession extends RawSession {
       // Oh well doesn't matter. elevate loading level to 0
       room.load = 0;
       room.loading = false;
+      return room;
     }, body => {
       room.loading = false;
       // TODO What's the error code of this?
+      throw body;
+    });
+  }
+  // Fetches connected chat room list
+  getRoomList() {
+    return this.sendCommand('GetRoomList', {
+      // Just directly using room list protocol from original code
+      cafeId: 0,
+      lastMsgTimeSec: 0,
+      // Type does nothing - :P
+      type: 1,
+      size: 100
+    })
+    .then(validateResponse)
+    .then(res => {
+      const { roomList } = res.bdy;
+      // We only need to look for roomList.
+      const rooms = roomList.map(room => translateRoomList(this, room));
+      return rooms;
+    }, body => {
       throw body;
     });
   }

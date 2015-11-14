@@ -10,7 +10,7 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [ ] InviteRoom
 - [x] DeleteRoom
 - [x] SyncRoom
-- [ ] GetRoomList
+- [x] GetRoomList
 - [ ] ChangeRoomName
 - [ ] ~~SetRoomAlarm~~
 - [ ] DelegateMaster
