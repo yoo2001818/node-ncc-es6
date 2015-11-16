@@ -97,6 +97,7 @@ class Session extends CommandSession {
     }
     room.lastMessage = newMessage;
     this.emit('message', newMessage);
+    return newMessage;
   }
   // Helper functions to send messages
   sendText(room, text) {

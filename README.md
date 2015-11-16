@@ -11,9 +11,9 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [x] DeleteRoom
 - [x] SyncRoom
 - [x] GetRoomList
-- [ ] ChangeRoomName
+- [x] ChangeRoomName
 - [ ] ~~SetRoomAlarm~~
-- [ ] DelegateMaster
+- [x] DelegateMaster
 - [ ] FindOpenRoomList
 - [ ] RejectMember
 - [ ] FindMyCafeList

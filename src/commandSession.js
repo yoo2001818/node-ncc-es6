@@ -57,6 +57,7 @@ class CommandSession extends RawSession {
       log('Successfully deleted room %s', room.name);
       // Remove room from the list, I suppose
       delete room.users[this.username];
+      return room;
     }, body => {
       switch (body.retCode) {
       case COMMAND_TYPE.NOT_FOUND_ROOM:
@@ -82,12 +83,15 @@ class CommandSession extends RawSession {
       // The room has been terminated; Delete from cafe and room.
       delete this.rooms[room.id];
       delete room.cafe.rooms[room.id];
+      return room;
     }, body => {
       // TODO What's the error code of this?
       throw body;
     });
   }
   // Fetches data from the server and elevates loading level to 0
+  // This also joins to the room if the user hasn't joined yet. Quite
+  // weird, right?
   syncRoom(room) {
     room.loading = true;
     return this.sendCommand('SyncRoom', {
@@ -133,6 +137,34 @@ class CommandSession extends RawSession {
       throw body;
     });
   }
+  // Changes room name
+  changeRoomName(room, name) {
+    return this.sendCommand('ChangeRoomName', {
+      cafeId: room.cafe.id,
+      roomId: room.id,
+      roomName: name
+    })
+    .then(validateResponse)
+    .then(() => {
+      // Since we don't know message state at this time, request message
+      // sync.
+      return this.syncMsg(room);
+    });
+  }
+  // Hands room master; Can accept user ID or user object.
+  delegateMaster(room, user) {
+    if (user.id) user = user.id;
+    return this.sendCommand('DelegateMaster', {
+      cafeId: room.cafe.id,
+      roomId: room.id,
+      targetMemberId: user
+    })
+    .then(validateResponse)
+    .then(() => {
+      // Resync is required for this too.
+      return this.syncMsg(room);
+    });
+  }
   // Syncs lost message from the server
   syncMsg(room) {
     if (room.sync) {
@@ -151,15 +183,16 @@ class CommandSession extends RawSession {
         // Digest missed messages
         room.lastMsgSn = body.lastMsgSn;
         room.sync = true;
-        body.msgList.forEach(newMessage => {
+        const list = body.msgList.map(newMessage => {
           // Fill unsent information
           newMessage.cafeId = room.cafe.id;
           newMessage.roomId = room.id;
           // There's no way to obtain this information if unsync has occurred
           newMessage.msgId = null;
-          this.handleMessage(newMessage);
+          return this.handleMessage(newMessage);
         });
         log('Digestion done');
+        return list;
       })
       .catch(err => {
         console.log(err);
@@ -201,7 +234,7 @@ class CommandSession extends RawSession {
       }
       log('Sent message; handling');
       // Then, handle it
-      this.handleMessage(rawMsg);
+      return this.handleMessage(rawMsg);
     }, body => {
       // TODO What's the error code of this?
       throw body;
