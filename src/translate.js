@@ -22,16 +22,26 @@ export function translateCafeFromMessage(session, data) {
   return cafe;
 }
 
-export function translateRoomFromMessage(session, data) {
+export function translateRoomFromMessage(session, data, unjoined) {
   if (session.rooms[data.roomId]) return session.rooms[data.roomId];
   const cafe = translateCafeFromMessage(session, data);
+  if (cafe.rooms[data.roomId]) {
+    let room = cafe.rooms[data.roomId];
+    if (!unjoined) {
+      session.rooms[data.roomId] = room;
+      room.joined = true;
+    }
+    return room;
+  }
   let room;
-  room = session.rooms[data.roomId] = new Room(session, data.roomId);
+  room = new Room(session, data.roomId);
+  if (!unjoined) session.rooms[data.roomId] = room;
   // There's almost no information to obtain here.
   room.load = ROOM_LOAD_BARE;
   room.cafe = cafe;
   room.lastMsgSn = data.msgSn - 1,
   room.sync = true;
+  room.joined = !unjoined;
   cafe.rooms[room.id] = room;
   return room;
 }
@@ -46,7 +56,7 @@ export function translateUserFromMessage(session, data) {
   } else {
     user = cafe.users[data.senderId];
   }
-  room.users[data.senderId] = user;
+  if (!data.old) room.users[data.senderId] = user;
   if (!data.sent) {
     user.nickname = data.senderNickname;
     user.image = data.senderProfileUrl.web;
@@ -54,7 +64,7 @@ export function translateUserFromMessage(session, data) {
   return user;
 }
 
-export function translateUserFromTarget(room, data) {
+export function translateUserFromTarget(room, data, old) {
   const cafe = room.cafe;
   // What the heck? Who wrote the server? This doesn't look good...
   // Anyway, we have to check both from the client, which is kinda bad.
@@ -70,7 +80,7 @@ export function translateUserFromTarget(room, data) {
   } else {
     user = cafe.users[id];
   }
-  room.users[id] = user;
+  if (!old) room.users[id] = user;
   user.nickname = nickname;
   return user;
 }
@@ -163,29 +173,31 @@ export function translateMessage(session, data) {
       if (message.type === 'join') {
         message.message = message.user.nickname;
         message.target = message.user;
-        message.room.userCount ++;
+        if (!data.old) message.room.userCount ++;
         return message;
       }
       // 'leave' too. However, we need to remove the user from the room.
       // Not from the cafe though, we may need reference to the user later.
       if (message.type === 'leave') {
         // Just remove the user from the room.
-        delete message.room.users[message.user.id];
+        if (!data.old) delete message.room.users[message.user.id];
         message.message = message.user.nickname;
         message.target = message.user;
-        message.room.userCount --;
+        if (!data.old) message.room.userCount --;
         return message;
       }
       // 'reject'. That equals to leaving. However, we look for the
       // actionItem this time.
       if (message.type === 'reject') {
         // Anyway, retrieve the user from the data.
-        const targetUser = translateUserFromTarget(message.room, actionItem);
+        const targetUser = translateUserFromTarget(
+          message.room, actionItem, data.old
+        );
         // Then remove the user from the room list.
-        delete message.room.users[targetUser.id];
+        if (!data.old) delete message.room.users[targetUser.id];
         message.message = targetUser.nickname;
         message.target = targetUser;
-        message.room.userCount --;
+        if (!data.old) message.room.userCount --;
         return message;
       }
       // 'invite' too. We only have to look for the target!
@@ -195,17 +207,17 @@ export function translateMessage(session, data) {
       if (message.type === 'invite') {
         // Retrieve the user from the data. This time it's an array.
         const targetUsers = target.map(
-          user => translateUserFromTarget(message.room, user)
+          user => translateUserFromTarget(message.room, user, data.old)
         );
         // Not too shabby, eh?
         message.message = targetUsers.map(user => user.nickname).join(' ,');
         message.target = targetUsers;
-        message.room.userCount += targetUsers.length;
+        if (!data.old) message.room.userCount += targetUsers.length;
         return message;
       }
       // How about 'changeName'? We can just change room's name. Duh.
       if (message.type === 'changeName') {
-        message.room.name = actionItem;
+        if (!data.old) message.room.name = actionItem;
         message.message = actionItem;
         message.target = actionItem;
         return message;
@@ -269,11 +281,12 @@ export function translateCafeFromSyncRoom(session, data) {
   // FYI: SyncRoom returns 'cafeImageurl',
   // but GetRoomList returns 'cafeImageUrl'
   cafe.image = data.cafeImageurl || data.cafeImageUrl;
+  return cafe;
 }
 
 export function translateSyncRoom(session, data) {
   // It's really fine to 'extend' from message packet
-  translateCafeFromSyncRoom(session, data);
+  const cafe = translateCafeFromSyncRoom(session, data);
   const room = translateRoomFromMessage(session, data);
   room.load = ROOM_LOAD_COMPLETE;
   room.name = data.roomName;
@@ -290,6 +303,7 @@ export function translateSyncRoom(session, data) {
   message.roomId = data.roomId;
   message.cafeId = data.cafeId;
   room.lastMessage = translateMessage(session, message);
+  cafe.canClose = data.closePermission;
   // Things I didn't handle in here
   // closePermission
   // lastAckSn
@@ -314,4 +328,32 @@ export function translateRoomList(session, data) {
   room.lastMsgSn = data.lastMsgSn;
   // TODO Don't process lastMessage yet
   return room;
+}
+
+export function translateRoomFromFind(session, data) {
+  // It's really fine to 'extend' from message packet
+  translateCafeFromSyncRoom(session, data);
+  // We're not joined in that room. Hmm.
+  const room = translateRoomFromMessage(session, data, !data.participant);
+  room.load = ROOM_LOAD_PARTIAL;
+  room.name = data.roomName;
+  // Duh, it's obvious - It only returns open rooms
+  room.isPublic = true;
+  room.is1to1 = false;
+  // Seriously. memberCnt, then this? urrugh
+  room.userCount = data.memberCount;
+  room.maxUserCount = 100;
+  // This too! it's masterId, not masterUserId.
+  room.master = translateUserBareId(room, data.masterId);
+  // It was lastMsgTimeSec.
+  room.updated = new Date(data.lastMsgTimestamp * 1000);
+  room.lastMsgSn = data.lastMsgSn;
+  // TODO Don't process lastMessage yet
+  return room;
+}
+
+export function translateCafeFromFind(session, data) {
+  const cafe = translateCafeFromSyncRoom(session, data);
+  cafe.canClose = data.closePermission;
+  return cafe;
 }

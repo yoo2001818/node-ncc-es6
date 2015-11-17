@@ -9,6 +9,7 @@ export default class Cafe {
     this.image = null;
     this.users = {};
     this.rooms = {};
+    this.canClose = false;
     this.loading = false;
     this.load = CAFE_LOAD_BARE;
   }

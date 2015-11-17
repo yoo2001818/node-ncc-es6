@@ -14,15 +14,15 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [x] ChangeRoomName
 - [ ] ~~SetRoomAlarm~~
 - [x] DelegateMaster
-- [ ] FindOpenRoomList
+- [x] FindOpenRoomList
 - [x] RejectMember
-- [ ] FindMyCafeList
+- [x] FindMyCafeList
 - [ ] ~~ProhibitWordCheck~~
 - [ ] ~~GetRoomMemberList~~
 - [x] SendMsg
 - [x] SyncMsg
-- [ ] GetMsg
-- [ ] AckMsg
+- [x] GetMsg
+- [x] AckMsg
 - [ ] ~~ReportBadMember~~
 - [x] CloseOpenroom
 - [ ] ~~GetGroupChatUseConfigList~~
@@ -34,6 +34,7 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [ ] ~~CheckBlockMemberList~~
 - [ ] External commands
   - [ ] CafeMemberList
+  - [ ] CafeMemberSearch
   - [ ] ~~ChatTitleCheck~~
 
 ## Packet Handling

@@ -2,7 +2,13 @@ import RawSession, { DEVICE_TYPE } from './rawSession.js';
 import { CHAT_BROKER_SSL_URL,
   COMMAND_TYPE, COMMAND_RESULT_CODE } from './config.js';
 import { MSG_TYPE } from './message.js';
-import { translateSyncRoom, translateRoomList } from './translate.js';
+import {
+  translateSyncRoom,
+  translateRoomList,
+  translateMessage,
+  translateRoomFromFind,
+  translateCafeFromFind
+} from './translate.js';
 import debug from 'debug';
 
 const log = debug('ncc:commandSession');
@@ -64,6 +70,7 @@ class CommandSession extends RawSession {
       log('Successfully deleted room %s', room.name);
       // Remove room from the list, I suppose
       delete room.users[this.username];
+      room.joined = false;
       room.userCount --;
       delete this.rooms[room.id];
       // But don't delete it from the cafe; Room doesn't get removed even if
@@ -97,6 +104,7 @@ class CommandSession extends RawSession {
     .then(() => {
       log('Successfully closed room %s', room.name);
       // The room has been terminated; Delete from cafe and room.
+      room.joined = false;
       delete this.rooms[room.id];
       delete room.cafe.rooms[room.id];
       return room;
@@ -215,6 +223,32 @@ class CommandSession extends RawSession {
       return this.syncMsg(room);
     });
   }
+  // Returns a list of cafe open rooms
+  findOpenRoomList(cafe, order = 'time', page = 1) {
+    return this.sendCommand('FindOpenRoomList', {
+      cafeId: cafe.id,
+      orderBy: order === 'time' ? 'LastMsgTimestamp' : 'RoomName',
+      page: page
+    })
+    .then(validateResponse)
+    .then(res => {
+      const { openRoomList } = res.bdy;
+      const rooms = openRoomList.map(room => translateRoomFromFind(this, room));
+      console.log(rooms);
+      return rooms;
+    });
+  }
+  // Returns a list of joined cafes
+  findMyCafeList() {
+    return this.sendCommand('FindMyCafeList', {})
+    .then(validateResponse)
+    .then(res => {
+      const { myCafeList } = res.bdy;
+      const cafes = myCafeList.map(cafe => translateCafeFromFind(this, cafe));
+      console.log(cafes);
+      return cafes;
+    });
+  }
   // Syncs lost message from the server
   syncMsg(room) {
     if (room.sync) {
@@ -288,6 +322,29 @@ class CommandSession extends RawSession {
     }, body => {
       // TODO What's the error code of this?
       throw body;
+    });
+  }
+  // Get old messages and returns them.
+  getMsg(room, start, end) {
+    return this.sendCommand('GetMsg', {
+      cafeId: room.cafe.id,
+      roomId: room.id,
+      startMsgSn: start,
+      endMsgSn: end
+    })
+    .then(validateResponse)
+    .then(res => {
+      const { msgList } = res.bdy;
+      // However, we need to mark that this message is 'old' to prevent
+      // changing room information by translator.
+      const messages = msgList.map(msg => translateMessage(this,
+        Object.assign({}, msg, {
+          old: true,
+          roomId: room.id,
+          cafeId: room.cafe.id
+        })
+      ));
+      return messages;
     });
   }
   // Send an acknowledge to the server. However, this is only necessary if

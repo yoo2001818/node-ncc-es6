@@ -12,6 +12,7 @@ export default class Room {
     this.maxUserCount = null;
     this.userCount = null;
     this.users = {};
+    this.joined = true;
     this.master = null;
     this.updated = null;
     this.lastMessage = null;
@@ -28,6 +29,6 @@ export default class Room {
     });
   }
   inspect() {
-    return this.name || this.id;
+    return (this.name || this.id) + (this.joined ? '' : ' (Unjoined)');
   }
 }
