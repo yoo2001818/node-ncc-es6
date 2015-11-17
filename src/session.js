@@ -102,7 +102,7 @@ class Session extends CommandSession {
     return this.sendMsg({
       room: room,
       type: 'text',
-      message: text
+      message: text + ''
     });
   }
   sendSticker(room, stickerId) {

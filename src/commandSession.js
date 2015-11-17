@@ -23,6 +23,7 @@ const validateResponse = (body) => {
     return body;
   }
   // Otherwise an error.
+  console.log(body);
   const error = new Error(`${body.retTitle}, ${body.retMsg}`);
   error.retCode = body.retCode;
   throw error;
@@ -51,6 +52,55 @@ class CommandSession extends RawSession {
         deviceType: DEVICE_TYPE.WEB,
         cmd: COMMAND_TYPE[command],
         bdy: body
+      }
+    });
+  }
+  // options: name, isPublic, is1to1.
+  // However, creating non-1to1 room isn't supported now. Be careful.
+  createRoom(cafe, userList, options = {
+    name: '', isPublic: false
+  }, captcha = {}) {
+    const users = userList.map(user => user.id || user);
+    return this.sendCommand('CreateRoom', {
+      cafeId: cafe.id.toString(),
+      roomType: (users.length !== 2 || options.isPublic) ? 1 : 0,
+      openType: options.isPublic ? 'O' : 'C',
+      masterUserId: options.masterId || this.username,
+      roomName: options.name,
+      captchaKey: captcha.key || '',
+      captchaValue: captcha.value || '',
+      memberList: users
+    })
+    .then(res => {
+      if (res.bdy && res.bdy.roomId) {
+        // Consider it done.
+        const { roomId, cafeId } = res.bdy;
+        return this.joinRoom(cafeId, roomId);
+      }
+      console.log(res);
+    });
+  }
+  inviteRoom(room, userList, captcha = {}) {
+    const users = userList.map(user => user.id || user);
+    return this.sendCommand('InviteRoom', {
+      cafeId: room.cafe.id.toString(),
+      roomId: room.id,
+      captchaKey: captcha.key || '',
+      captchaValue: captcha.value || '',
+      inviteeList: users
+    })
+    .then(validateResponse)
+    .then(() => {
+      // Done
+    }, res => {
+      // .bdy.token.captchaKey
+      // .bdy.token.imageUrl
+      if (res.resCode === 1036 || res.resCode === 1037) {
+        throw {
+          captcha: true,
+          key: res.bdy.token.captchaKey,
+          image: res.bdy.token.imageUrl
+        };
       }
     });
   }

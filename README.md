@@ -6,8 +6,8 @@ Naver cafe chat library for Node.js with ES6
 This is still in development!! DO NOT USE IN PRODUCTION YET
 
 ## Command Implementation
-- [ ] CreateRoom
-- [ ] InviteRoom
+- [x] CreateRoom
+- [x] InviteRoom
 - [x] DeleteRoom
 - [x] SyncRoom
 - [x] GetRoomList
