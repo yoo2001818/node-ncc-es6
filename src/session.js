@@ -22,8 +22,6 @@ class Session extends CommandSession {
     // Randomly choose a server
     const server = SESSION_SERVER_URLS[Math.floor(Math.random()*10)+11];
     super(server, credentials);
-    this.rooms = {};
-    this.cafes = {};
   }
   handlePoll(data) {
     data.forEach(item => {

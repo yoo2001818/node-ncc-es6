@@ -25,6 +25,9 @@ const validateResponse = (body) => {
 class CommandSession extends RawSession {
   constructor(server, credentials) {
     super(server, credentials);
+    this.rooms = {};
+    this.cafes = {};
+    this.roomsLoaded = false;
   }
   sendCommand(command, body) {
     if (!this.connected) return Promise.reject(new Error('Not connected'));
@@ -48,6 +51,10 @@ class CommandSession extends RawSession {
   // This deletes room from the USER. which means, this doesn't terminate
   // the room.
   deleteRoom(room) {
+    // Check validity of the room data.
+    if (this.roomsLoaded && this.rooms[room.id] == null) {
+      return Promise.reject(new Error('Not joined in the room'));
+    }
     return this.sendCommand('DeleteRoom', {
       cafeId: room.cafe.id,
       roomId: room.id
@@ -57,6 +64,11 @@ class CommandSession extends RawSession {
       log('Successfully deleted room %s', room.name);
       // Remove room from the list, I suppose
       delete room.users[this.username];
+      room.userCount --;
+      delete this.rooms[room.id];
+      // But don't delete it from the cafe; Room doesn't get removed even if
+      // the user leave the room... unless there is only one user in the room.
+      if (room.userCount === 0) delete room.cafe.rooms[room.id];
       return room;
     }, body => {
       switch (body.retCode) {
@@ -73,6 +85,10 @@ class CommandSession extends RawSession {
   }
   // This closes the room forcefully. Only staffs are able to do it.
   closeOpenroom(room) {
+    // Check validity of the room data.
+    if (this.roomsLoaded && room.cafe.rooms[room.id] == null) {
+      return Promise.reject(new Error('Room does not exist'));
+    }
     return this.sendCommand('CloseOpenroom', {
       cafeId: room.cafe.id,
       roomId: room.id
@@ -117,6 +133,16 @@ class CommandSession extends RawSession {
       throw body;
     });
   }
+  // Just an alias..
+  joinRoom(cafeId, roomId) {
+    if (cafeId.id) return this.syncRoom(cafeId);
+    return this.syncRoom({
+      id: roomId,
+      cafe: {
+        id: cafeId
+      }
+    });
+  }
   // Fetches connected chat room list
   getRoomList() {
     return this.sendCommand('GetRoomList', {
@@ -129,6 +155,7 @@ class CommandSession extends RawSession {
     })
     .then(validateResponse)
     .then(res => {
+      this.roomsLoaded = true;
       const { roomList } = res.bdy;
       // We only need to look for roomList.
       const rooms = roomList.map(room => translateRoomList(this, room));
@@ -139,6 +166,9 @@ class CommandSession extends RawSession {
   }
   // Changes room name
   changeRoomName(room, name) {
+    if (room.master && room.master.id !== this.username) {
+      return Promise.reject(new Error('You are not master of the room'));
+    }
     return this.sendCommand('ChangeRoomName', {
       cafeId: room.cafe.id,
       roomId: room.id,
@@ -153,8 +183,28 @@ class CommandSession extends RawSession {
   }
   // Hands room master; Can accept user ID or user object.
   delegateMaster(room, user) {
+    if (room.master && room.master.id !== this.username) {
+      return Promise.reject(new Error('You are not master of the room'));
+    }
     if (user.id) user = user.id;
     return this.sendCommand('DelegateMaster', {
+      cafeId: room.cafe.id,
+      roomId: room.id,
+      targetMemberId: user
+    })
+    .then(validateResponse)
+    .then(() => {
+      // Resync is required for this too.
+      return this.syncMsg(room);
+    });
+  }
+  // 'Bans' the user. Can accept user ID or user object.
+  rejectMember(room, user) {
+    if (room.master && room.master.id !== this.username) {
+      return Promise.reject(new Error('You are not master of the room'));
+    }
+    if (user.id) user = user.id;
+    return this.sendCommand('RejectMember', {
       cafeId: room.cafe.id,
       roomId: room.id,
       targetMemberId: user
@@ -239,6 +289,19 @@ class CommandSession extends RawSession {
       // TODO What's the error code of this?
       throw body;
     });
+  }
+  // Send an acknowledge to the server. However, this is only necessary if
+  // you're making an actual chat client, it's not required for bots.
+  // However, node-ncc-es6 doesn't handle lastAckSn yet, so this isn't likely
+  // to be used anyway. TODO feel free to send a pull request.
+  ackMsg(message) {
+    return this.sendCommand('AckMsg', {
+      cafeId: message.room.cafe.id,
+      roomId: message.room.id,
+      lastMsgSn: message.id
+    })
+    // However, validation isn't required.
+    .then(validateResponse);
   }
   // While commandSession itself doesn't use polling, but we still need to
   // process message. Of course it's very raw and not ready to use.

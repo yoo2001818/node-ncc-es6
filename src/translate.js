@@ -163,6 +163,7 @@ export function translateMessage(session, data) {
       if (message.type === 'join') {
         message.message = message.user.nickname;
         message.target = message.user;
+        message.room.userCount ++;
         return message;
       }
       // 'leave' too. However, we need to remove the user from the room.
@@ -172,6 +173,7 @@ export function translateMessage(session, data) {
         delete message.room.users[message.user.id];
         message.message = message.user.nickname;
         message.target = message.user;
+        message.room.userCount --;
         return message;
       }
       // 'reject'. That equals to leaving. However, we look for the
@@ -183,6 +185,7 @@ export function translateMessage(session, data) {
         delete message.room.users[targetUser.id];
         message.message = targetUser.nickname;
         message.target = targetUser;
+        message.room.userCount --;
         return message;
       }
       // 'invite' too. We only have to look for the target!
@@ -197,6 +200,7 @@ export function translateMessage(session, data) {
         // Not too shabby, eh?
         message.message = targetUsers.map(user => user.nickname).join(' ,');
         message.target = targetUsers;
+        message.room.userCount += targetUsers.length;
         return message;
       }
       // How about 'changeName'? We can just change room's name. Duh.

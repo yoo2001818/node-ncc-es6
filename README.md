@@ -15,10 +15,10 @@ This is still in development!! DO NOT USE IN PRODUCTION YET
 - [ ] ~~SetRoomAlarm~~
 - [x] DelegateMaster
 - [ ] FindOpenRoomList
-- [ ] RejectMember
+- [x] RejectMember
 - [ ] FindMyCafeList
 - [ ] ~~ProhibitWordCheck~~
-- [ ] GetRoomMemberList
+- [ ] ~~GetRoomMemberList~~
 - [x] SendMsg
 - [x] SyncMsg
 - [ ] GetMsg
