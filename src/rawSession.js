@@ -206,14 +206,20 @@ class RawSession extends EventEmitter {
           return this.credentials.login()
             .then(() => this.connect());
         default:
-          // Check limit?
-          this.emit('error', message.retMsg);
+          try {
+            // Check limit?
+            this.emit('error', message.retMsg);
+          } catch (e) { //eslint-disable-line
+          }
           return this.schedulePoll(retries + 1);
         }
       }
     })
     .catch(err => {
-      this.emit('error', err);
+      try {
+        this.emit('error', err);
+      } catch (e) { //eslint-disable-line
+      }
       return this.schedulePoll(retries + 1);
     });
   }
