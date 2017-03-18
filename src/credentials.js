@@ -86,6 +86,21 @@ class Credentials extends EventEmitter {
       // Encrypt key
       const { keyName, key } =
         encryptKey(keyString, this.username, this.password);
+      let form = {
+  	    enctp: 1,
+  	    encnm: keyName,
+  	    svctype: 0,
+  	    'enc_url': 'http0X0.0000000000001P-10220.0000000.000000www.naver.com',
+  	    url: 'www.naver.com',
+  	    'smart_level': 1,
+  	    encpw: key
+      };
+	  if(this.captcha){
+	    form.smart_LEVEL = -1;
+		f.chptcha = this.captcha; // Not a typo; Naver uses CHptcha
+		f.chptchakey = this.captchaKey;
+		f.captcha_type = 'image'; // but in this case Naver uses CAptcha
+	  }
       log('Sending encrypted login request');
       // Send login request
       return request({
@@ -95,20 +110,11 @@ class Credentials extends EventEmitter {
           'Accept': 'text/plain'
         },
         method: 'POST',
-        form: {
-          enctp: 1,
-          encnm: keyName,
-          svctype: 0,
-          'enc_url':
-            'http0X0.0000000000001P-10220.0000000.000000www.naver.com',
-          url: 'www.naver.com',
-          'smart_level': 1,
-          encpw: key
-        },
+        form: form,
         jar: this.cookieJar
       });
     })
-    .then(() => {
+    .then(body => {
       let cookieText = this.cookieJar.getCookieString('https://nid.naver.com/',
         {});
       if (cookieText.indexOf('NID_AUT') !== -1) {
@@ -116,8 +122,10 @@ class Credentials extends EventEmitter {
         this.emit('login');
         return Promise.resolve();
       } else {
+		let captcha = body.match(/<img id="captchaimg"[\s\S]+?>/im) || ""; // Parse captcha image if it exists
+		
         log('Failed to log in');
-        return Promise.reject('Invalid username or password');
+        return Promise.reject('Invalid username or password\n' + captcha);
       }
     })
     .catch(e => {
