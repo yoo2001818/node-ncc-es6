@@ -73,7 +73,7 @@ class Credentials extends EventEmitter {
       }
     });
   }
-  login() {
+  login(captcha = {}) {
     log('Starting logging in');
     // Empty cookie jar
     log('Creating new cookie jar');
@@ -87,20 +87,20 @@ class Credentials extends EventEmitter {
       const { keyName, key } =
         encryptKey(keyString, this.username, this.password);
       let form = {
-  	    enctp: 1,
-  	    encnm: keyName,
-  	    svctype: 0,
-  	    'enc_url': 'http0X0.0000000000001P-10220.0000000.000000www.naver.com',
-  	    url: 'www.naver.com',
-  	    'smart_level': 1,
-  	    encpw: key
+        enctp: 1,
+        encnm: keyName,
+        svctype: 0,
+        'enc_url': 'http0X0.0000000000001P-10220.0000000.000000www.naver.com',
+        url: 'www.naver.com',
+        'smart_level': 1,
+        encpw: key
       };
-	  if(this.captcha){
-	    form.smart_LEVEL = -1;
-		f.chptcha = this.captcha; // Not a typo; Naver uses CHptcha
-		f.chptchakey = this.captchaKey;
-		f.captcha_type = 'image'; // but in this case Naver uses CAptcha
-	  }
+      if(this.captcha){
+        form.smart_LEVEL = -1;
+        form.chptchakey = captcha.key; // Not a typo; Naver uses CHptcha
+        form.chptcha = captcha.value;
+        form.captcha_type = 'image'; // but in this case Naver uses CAptcha
+      }
       log('Sending encrypted login request');
       // Send login request
       return request({
@@ -122,10 +122,10 @@ class Credentials extends EventEmitter {
         this.emit('login');
         return Promise.resolve();
       } else {
-		let captcha = body.match(/<img id="captchaimg"[\s\S]+?>/im) || ""; // Parse captcha image if it exists
-		
+        // Parse captcha image if it exists
+        let captcha = body.match(/<img id="captchaimg"[\s\S]+?>/im);
         log('Failed to log in');
-        return Promise.reject('Invalid username or password\n' + captcha);
+        return Promise.reject('Invalid username or password' + (captcha ? ('\n' + captcha[0]) : ''));
       }
     })
     .catch(e => {
