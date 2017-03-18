@@ -97,9 +97,9 @@ class Credentials extends EventEmitter {
       };
 	  if(this.captcha){
 	    form.smart_LEVEL = -1;
-		f.chptcha = this.captcha; // Not a typo; Naver uses CHptcha
-		f.chptchakey = this.captchaKey;
-		f.captcha_type = 'image'; // but in this case Naver uses CAptcha
+	    form.chptcha = this.captcha; // Not a typo; Naver uses CHptcha
+	    form.chptchakey = this.captchaKey;
+            form.captcha_type = 'image'; // but in this case Naver uses CAptcha
 	  }
       log('Sending encrypted login request');
       // Send login request
