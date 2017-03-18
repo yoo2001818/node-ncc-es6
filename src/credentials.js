@@ -95,7 +95,7 @@ class Credentials extends EventEmitter {
         'smart_level': 1,
         encpw: key
       };
-      if(this.captcha){
+      if (this.captcha) {
         form.smart_LEVEL = -1;
         form.chptchakey = captcha.key; // Not a typo; Naver uses CHptcha
         form.chptcha = captcha.value;
@@ -125,7 +125,8 @@ class Credentials extends EventEmitter {
         // Parse captcha image if it exists
         let captcha = body.match(/<img id="captchaimg"[\s\S]+?>/im);
         log('Failed to log in');
-        return Promise.reject('Invalid username or password' + (captcha ? ('\n' + captcha[0]) : ''));
+        return Promise.reject('Invalid username or password' +
+          (captcha ? ('\n' + captcha[0]) : ''));
       }
     })
     .catch(e => {
