@@ -98,7 +98,14 @@ export function translateMessage(session, data) {
   if (message.type === 'text') {
     message.message = data.msg;
   } else {
-    let parsed = JSON.parse(data.msg);
+    let parsed;
+    try {
+      parsed = JSON.parse(data.msg);
+    } catch (e) {
+      console.log(`Malformed message: type=${message.type} but msg=${data.msg}`);
+      message.message = data.msg;
+      return message;
+    }
     //console.log(data);
     //console.log(parsed);
     switch (message.type) {
