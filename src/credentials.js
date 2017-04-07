@@ -95,7 +95,7 @@ class Credentials extends EventEmitter {
         'smart_level': 1,
         encpw: key
       };
-      if (this.captcha) {
+      if (captcha != null) {
         form.smart_LEVEL = -1;
         form.chptchakey = captcha.key; // Not a typo; Naver uses CHptcha
         form.chptcha = captcha.value;
