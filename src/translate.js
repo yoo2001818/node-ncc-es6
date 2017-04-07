@@ -99,7 +99,6 @@ export function translateMessage(session, data) {
     message.message = data.msg;
   } else {
     let parsed;
-    
     try {
       parsed = JSON.parse(data.msg);
     } catch (e) {
