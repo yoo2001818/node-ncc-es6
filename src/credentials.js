@@ -73,7 +73,7 @@ class Credentials extends EventEmitter {
       }
     });
   }
-  login(captcha = {}) {
+  login(captcha = {}, options = {}) {
     log('Starting logging in');
     // Empty cookie jar
     log('Creating new cookie jar');
@@ -95,11 +95,14 @@ class Credentials extends EventEmitter {
         'smart_level': 1,
         encpw: key
       };
-      if (captcha != null) {
+      if (captcha.key) {
         form.smart_LEVEL = -1;
         form.chptchakey = captcha.key; // Not a typo; Naver uses CHptcha
         form.chptcha = captcha.value;
         form.captcha_type = 'image'; // but in this case Naver uses CAptcha
+      }
+      for (let i in options) {
+        form[i] = options[i];
       }
       log('Sending encrypted login request');
       // Send login request
@@ -122,11 +125,18 @@ class Credentials extends EventEmitter {
         this.emit('login');
         return Promise.resolve();
       } else {
-        // Parse captcha image if it exists
+        // Parse additional login status if it exists
         let captcha = body.match(/<img id="captchaimg"[\s\S]+?>/im);
+        let addDevice = body.match(/<form id="frmNIDLogin"[\s\S]+?loginAndDeviceAdd[\s\S]+?<\/form>/im);
+        let otp = body.match(/<form id="frmNIDLogin"[\s\S]+?"otp"[\s\S]+?<\/form>/im);
         log('Failed to log in');
-        return Promise.reject('Invalid username or password' +
-          (captcha ? ('\n' + captcha[0]) : ''));
+        return Promise.reject({
+          text: 'Failed to log in.',
+          captcha: captcha ? captcha[0] : null,
+          addDevice: addDevice ? addDevice[0] : null,
+          otp: otp,
+          body: body
+        });
       }
     })
     .catch(e => {
